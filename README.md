@@ -26,6 +26,12 @@ stays on the device: no account, no server, no cloud AI.
   menus and dialogs (iOS and Material), responsive layouts for phones and
   tablets, reduced-motion support.
 
+## Product requirements
+
+A plain-language description of what MedScan does and does not do, written for
+doctors and pharmacists to review, with questions for clinical feedback:
+**[docs/PRD.md](docs/PRD.md)**.
+
 ## Platform support
 
 | Capability | Android / iOS | Other platforms |

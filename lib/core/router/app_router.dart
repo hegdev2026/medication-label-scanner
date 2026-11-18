@@ -8,6 +8,7 @@ import 'package:medicine_lab_reader/features/dashboard/presentation/routes/dashb
 import 'package:medicine_lab_reader/features/expiry/presentation/routes/expiry_routes.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/routes/medicines_routes.dart';
 import 'package:medicine_lab_reader/features/scanner/presentation/routes/scanner_routes.dart';
+import 'package:medicine_lab_reader/features/search/presentation/routes/search_routes.dart';
 import 'package:medicine_lab_reader/features/settings/presentation/routes/settings_routes.dart';
 import 'package:medicine_lab_reader/features/shell/presentation/pages/app_shell.dart';
 
@@ -18,6 +19,7 @@ class AppRouter {
   /// with the shell's navigation destinations.
   static final List<FeatureRoutes> tabModules = [
     dashboardRoutes,
+    searchRoutes,
     medicinesRoutes,
     expiryRoutes,
     settingsRoutes,

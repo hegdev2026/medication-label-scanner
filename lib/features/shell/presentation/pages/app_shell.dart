@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:medicine_lab_reader/common/adaptive/adaptive_view.dart';
 import 'package:medicine_lab_reader/core/router/app_routes.dart';
 import 'package:medicine_lab_reader/features/shell/presentation/widgets/mobile_bottom_nav.dart';
+import 'package:medicine_lab_reader/features/shell/presentation/widgets/nav_scan_button.dart';
 import 'package:medicine_lab_reader/features/shell/presentation/widgets/side_rail.dart';
 
 /// Adaptive shell: bottom bar on mobile, rail on tablet, extended rail on desktop.
@@ -35,10 +36,12 @@ class AppShell extends StatelessWidget {
   Widget build(BuildContext context) => AdaptiveView(
     mobile: (context) => Scaffold(
       body: shell,
+      // Sits above the floating bar, at the end of the screen.
+      floatingActionButton: NavScanButton(onTap: () => _scan(context)),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: MobileBottomNav(
         index: shell.currentIndex,
         onSelected: _go,
-        onScan: () => _scan(context),
       ),
     ),
     tablet: (context) => _withRail(context, extended: false),

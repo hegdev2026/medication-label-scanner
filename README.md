@@ -168,3 +168,46 @@ the Hindi translations should be checked by a native speaker.
   alternative-medicine advice. If cloud AI analysis is ever added, the
   Terms of Service and Privacy Policy must be rewritten first, because photos
   would then leave the device.
+
+## Smart scan (optional, free)
+
+Smart scan sends the photo you scan to the free OCR.space service for more
+accurate text reading. Get a free key at https://ocr.space/ocrapi/freekey, then
+build with:
+
+```bash
+make env     # creates env.json (git-ignored); fill in OCR_SPACE_KEY
+make run     # or: make apk / make aab
+```
+
+Without a key, smart scan is hidden and photos are read on the device only.
+The free plan accepts photos up to 1 MB (the app resizes them) and has daily
+limits; when it fails or runs out, the app falls back to on-device reading.
+The key ships inside the app, so use a free key you can replace.
+
+`env.json` also takes `APP_CONTACT`, a website or support address Wikimedia can
+use to reach the app's owner (it goes in the request header, nothing is
+registered). Both values are optional.
+
+### CI (GitHub Actions)
+
+Store the values as repository secrets (`OCR_SPACE_KEY`, `APP_CONTACT`) and
+create `env.json` before building:
+
+```yaml
+- name: Create env.json
+  run: |
+    jq -n --arg k "$OCR_SPACE_KEY" --arg c "$APP_CONTACT" \
+      '{OCR_SPACE_KEY:$k, APP_CONTACT:$c}' > env.json
+  env:
+    OCR_SPACE_KEY: ${{ secrets.OCR_SPACE_KEY }}
+    APP_CONTACT: ${{ secrets.APP_CONTACT }}
+- run: make aab
+```
+
+## Ads (Google AdMob)
+
+The app shows banner, native, interstitial and rewarded ads. Debug builds use
+Google's test ads; release builds use the real ad unit ids from `env.json`.
+Setup, placements, consent and the Play Store checklist are in
+[docs/ADS.md](docs/ADS.md).

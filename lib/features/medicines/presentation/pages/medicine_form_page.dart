@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,10 +8,12 @@ import 'package:go_router/go_router.dart';
 import 'package:medicine_lab_reader/common/widgets/confirm_dialog.dart';
 import 'package:medicine_lab_reader/common/widgets/custom_toast.dart';
 import 'package:medicine_lab_reader/common/widgets/empty_state.dart';
+import 'package:medicine_lab_reader/core/ads/ads_cubit.dart';
 import 'package:medicine_lab_reader/core/di/sl.dart';
 import 'package:medicine_lab_reader/core/error/failure_text.dart';
 import 'package:medicine_lab_reader/core/error/failures.dart';
 import 'package:medicine_lab_reader/core/router/app_routes.dart';
+import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine_seed.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/bloc/medicine_form/medicine_form_cubit.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_form_body.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_screen_skeletons.dart';
@@ -17,9 +21,10 @@ import 'package:medicine_lab_reader/features/scanner/domain/entities/extracted_d
 
 /// Review after a scan, manual entry, or editing a saved medicine.
 class MedicineFormPage extends StatelessWidget {
-  const MedicineFormPage({super.key, this.medicineId, this.draft});
+  const MedicineFormPage({super.key, this.medicineId, this.draft, this.seed});
   final int? medicineId;
   final ScanDraft? draft;
+  final MedicineSeed? seed;
 
   String get _title => medicineId != null
       ? 'form.titleEdit'.tr()
@@ -34,6 +39,8 @@ class MedicineFormPage extends StatelessWidget {
           context.pop();
         } else if (id != null) {
           context.go(AppRoutes.details(id));
+          // A natural break after adding a medicine (never after an edit).
+          if (medicineId == null) unawaited(sl<AdsCubit>().onMedicineAdded());
         }
       case FormStatus.duplicateFound:
         final name = s.duplicates.isEmpty ? '' : s.duplicates.first.name;
@@ -84,7 +91,7 @@ class MedicineFormPage extends StatelessWidget {
               icon: Icons.error_outline,
               title: failureText(s.failure ?? const UnknownFailure()),
             ),
-          _ => MedicineFormBody(existing: s.existing, draft: draft),
+          _ => MedicineFormBody(existing: s.existing, draft: draft, seed: seed),
         },
       ),
     ),

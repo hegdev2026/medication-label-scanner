@@ -6,6 +6,7 @@ import 'package:medicine_lab_reader/common/widgets/app_text_field.dart';
 import 'package:medicine_lab_reader/common/widgets/section_card.dart';
 import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/date_input_field.dart';
+import 'package:medicine_lab_reader/features/medicines/presentation/widgets/form_hint_chips.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_form_controllers.dart';
 import 'package:medicine_lab_reader/features/scanner/domain/entities/extracted_details.dart';
 
@@ -104,6 +105,7 @@ class MedicineFormFields extends StatelessWidget {
                     label: 'form.dosageForm'.tr(),
                   ),
                 ),
+                FormHintChips(controllers: c),
                 gap,
                 AppTextField(
                   controller: c.generic,

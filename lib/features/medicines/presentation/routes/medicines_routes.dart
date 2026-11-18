@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:medicine_lab_reader/core/router/app_routes.dart';
 import 'package:medicine_lab_reader/core/router/feature_routes.dart';
 import 'package:medicine_lab_reader/core/router/navigator_keys.dart';
+import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine_seed.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/pages/inventory_page.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/pages/medicine_details_page.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/pages/medicine_form_page.dart';
@@ -31,7 +32,10 @@ final medicinesRoutes = FeatureRoutes(
     GoRoute(
       parentNavigatorKey: rootNavigatorKey,
       path: AppRoutes.medicineNew,
-      builder: (_, _) => const MedicineFormPage(),
+      builder: (_, state) {
+        final extra = state.extra;
+        return MedicineFormPage(seed: extra is MedicineSeed ? extra : null);
+      },
     ),
     GoRoute(
       parentNavigatorKey: rootNavigatorKey,

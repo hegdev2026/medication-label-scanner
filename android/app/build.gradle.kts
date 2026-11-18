@@ -24,10 +24,18 @@ android {
         applicationId = "com.subshegde.medscan"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Google Mobile Ads needs API 23 or newer.
+        minSdk = maxOf(23, flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // AdMob app id: ADMOB_APP_ID from the environment or a gradle property,
+        // else Google's test id. The app id is not a secret.
+        val admobAppId =
+            System.getenv("ADMOB_APP_ID")?.takeIf { it.isNotBlank() }
+                ?: (project.findProperty("ADMOB_APP_ID") as String?)?.takeIf { it.isNotBlank() }
+                ?: "ca-app-pub-3940256099942544~3347511713"
+        manifestPlaceholders["admobAppId"] = admobAppId
     }
 
     buildTypes {

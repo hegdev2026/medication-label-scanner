@@ -4,11 +4,13 @@ import 'package:medicine_lab_reader/common/adaptive/adaptive_view.dart';
 import 'package:medicine_lab_reader/common/widgets/content_wrapper.dart';
 import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine.dart';
+import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine_info_query.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/expiry_batch_card.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/generic_name_card.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/label_notes_card.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_identity_card.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_image_panel.dart';
+import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_info_section.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/ocr_text_card.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/review_status_pill.dart';
 
@@ -34,6 +36,7 @@ class MedicineDetailsBody extends StatelessWidget {
       _gap(MedicineIdentityCard(medicine: m)),
       _gap(ExpiryBatchCard(medicine: m)),
       if (hasGeneric) _gap(GenericNameCard(medicine: m)),
+      _gap(MedicineInfoSection(query: MedicineInfoQuery.fromMedicine(m))),
       _gap(const LabelNotesCard()),
     ];
     return ContentWrapper(

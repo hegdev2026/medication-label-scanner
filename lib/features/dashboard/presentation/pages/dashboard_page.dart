@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:medicine_lab_reader/common/widgets/ads/ad_banner.dart';
 import 'package:medicine_lab_reader/common/widgets/brand_app_bar.dart';
 import 'package:medicine_lab_reader/common/widgets/content_wrapper.dart';
 import 'package:medicine_lab_reader/core/di/sl.dart';
@@ -54,6 +55,8 @@ class DashboardPage extends StatelessWidget {
                     onDismiss: context.read<DashboardCubit>().dismissInfo,
                   ),
                 ],
+                const SizedBox(height: AppSpace.lg),
+                const AdBanner(),
               ],
             ),
           );

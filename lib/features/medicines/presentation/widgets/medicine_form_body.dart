@@ -6,9 +6,12 @@ import 'package:medicine_lab_reader/common/adaptive/adaptive_view.dart';
 import 'package:medicine_lab_reader/common/widgets/app_button.dart';
 import 'package:medicine_lab_reader/common/widgets/confirm_dialog.dart';
 import 'package:medicine_lab_reader/common/widgets/content_wrapper.dart';
+import 'package:medicine_lab_reader/core/di/sl.dart';
 import 'package:medicine_lab_reader/core/constants/app_colors.dart';
 import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine.dart';
+import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine_seed.dart';
+import 'package:medicine_lab_reader/features/medicines/presentation/bloc/form_hints/form_hints_cubit.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/bloc/medicine_form/medicine_form_cubit.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_form_controllers.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_form_fields.dart';
@@ -18,9 +21,12 @@ import 'package:medicine_lab_reader/features/scanner/domain/entities/extracted_d
 /// Review / add / edit form. Holds only text controllers (ephemeral UI state);
 /// saving goes through [MedicineFormCubit].
 class MedicineFormBody extends StatefulWidget {
-  const MedicineFormBody({super.key, this.existing, this.draft});
+  const MedicineFormBody({super.key, this.existing, this.draft, this.seed});
   final Medicine? existing;
   final ScanDraft? draft;
+
+  /// Names carried over from a search result (add without scanning).
+  final MedicineSeed? seed;
 
   @override
   State<MedicineFormBody> createState() => _MedicineFormBodyState();
@@ -42,6 +48,7 @@ class _MedicineFormBodyState extends State<MedicineFormBody> {
     _controllers = MedicineFormControllers(
       existing: widget.existing,
       details: widget.draft?.details,
+      seed: widget.seed,
     );
   }
 
@@ -118,17 +125,20 @@ class _MedicineFormBodyState extends State<MedicineFormBody> {
         ],
       ),
     );
-    return Column(
-      children: [
-        Expanded(
-          child: ContentWrapper(
-            scrollable: true,
-            safeBottom: false,
-            child: content,
+    return BlocProvider(
+      create: (_) => sl<FormHintsCubit>()..load(widget.seed),
+      child: Column(
+        children: [
+          Expanded(
+            child: ContentWrapper(
+              scrollable: true,
+              safeBottom: false,
+              child: content,
+            ),
           ),
-        ),
-        _SaveDock(child: save),
-      ],
+          _SaveDock(child: save),
+        ],
+      ),
     );
   }
 }

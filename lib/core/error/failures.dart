@@ -30,3 +30,7 @@ class ImagePickFailure extends Failure {
 class UnknownFailure extends Failure {
   const UnknownFailure({super.detail}) : super('error.unknown');
 }
+
+class NetworkFailure extends Failure {
+  const NetworkFailure({super.detail}) : super('error.network');
+}

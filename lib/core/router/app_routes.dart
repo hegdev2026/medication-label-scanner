@@ -1,6 +1,7 @@
 abstract final class AppRoutes {
   // Shell (tab) routes
   static const dashboard = '/';
+  static const search = '/search';
   static const inventory = '/inventory';
   static const expiry = '/expiry';
   static const settings = '/settings';

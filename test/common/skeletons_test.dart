@@ -5,6 +5,7 @@ import 'package:medicine_lab_reader/core/constants/app_colors.dart';
 import 'package:medicine_lab_reader/core/theme/app_palette.dart';
 import 'package:medicine_lab_reader/features/dashboard/presentation/widgets/dashboard_skeleton.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_card_skeleton.dart';
+import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_info_skeleton.dart';
 import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medicine_screen_skeletons.dart';
 
 /// Every loading skeleton must lay out on a small phone without overflow, in
@@ -12,6 +13,7 @@ import 'package:medicine_lab_reader/features/medicines/presentation/widgets/medi
 void main() {
   final skeletons = <String, Widget>{
     'dashboard': const DashboardSkeleton(),
+    'info': const SingleChildScrollView(child: MedicineInfoSkeleton()),
     'details': const MedicineDetailsSkeleton(),
     'form': const MedicineFormSkeleton(),
     'list': const SingleChildScrollView(child: MedicineListSkeleton()),

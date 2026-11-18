@@ -1,37 +1,51 @@
 import 'package:flutter/material.dart';
 
 import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine.dart';
+import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine_seed.dart';
 import 'package:medicine_lab_reader/features/medicines/domain/value_objects/printed_date.dart';
 import 'package:medicine_lab_reader/features/scanner/domain/entities/extracted_details.dart';
 
 /// Text controllers for the medicine form, seeded from a saved record or a
 /// scan draft. Owned (and disposed) by the form body.
 class MedicineFormControllers {
-  MedicineFormControllers({Medicine? existing, ExtractedDetails? details})
-    : name = TextEditingController(text: existing?.name ?? details?.name ?? ''),
-      generic = TextEditingController(text: existing?.genericName ?? ''),
-      strength = TextEditingController(
-        text: existing?.strength ?? details?.strength ?? '',
-      ),
-      dosageForm = TextEditingController(
-        text: existing?.dosageForm ?? details?.dosageForm ?? '',
-      ),
-      batch = TextEditingController(
-        text: existing?.batchNumber ?? details?.batchNumber ?? '',
-      ),
-      maker = TextEditingController(
-        text: existing?.manufacturer ?? details?.manufacturer ?? '',
-      ),
-      mfg = TextEditingController(
-        text:
-            existing?.originalManufacturingText ??
-            details?.manufacturingDate?.original ??
-            '',
-      ),
-      expiry = TextEditingController(
-        text:
-            existing?.originalExpiryText ?? details?.expiryDate?.original ?? '',
-      );
+  MedicineFormControllers({
+    Medicine? existing,
+    ExtractedDetails? details,
+    MedicineSeed? seed,
+  }) : name = TextEditingController(
+         text: existing?.name ?? details?.name ?? seed?.name ?? '',
+       ),
+       generic = TextEditingController(
+         text: existing?.genericName ?? seed?.genericName ?? '',
+       ),
+       strength = TextEditingController(
+         text: existing?.strength ?? details?.strength ?? seed?.strength ?? '',
+       ),
+       dosageForm = TextEditingController(
+         text:
+             existing?.dosageForm ??
+             details?.dosageForm ??
+             seed?.dosageForm ??
+             '',
+       ),
+       batch = TextEditingController(
+         text: existing?.batchNumber ?? details?.batchNumber ?? '',
+       ),
+       maker = TextEditingController(
+         text: existing?.manufacturer ?? details?.manufacturer ?? '',
+       ),
+       mfg = TextEditingController(
+         text:
+             existing?.originalManufacturingText ??
+             details?.manufacturingDate?.original ??
+             '',
+       ),
+       expiry = TextEditingController(
+         text:
+             existing?.originalExpiryText ??
+             details?.expiryDate?.original ??
+             '',
+       );
 
   final TextEditingController name,
       generic,

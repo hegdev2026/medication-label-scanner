@@ -10,6 +10,7 @@ void main() {
     final paths = [for (final m in AppRouter.tabModules) _path(m.tab.single)];
     expect(paths, [
       AppRoutes.dashboard,
+      AppRoutes.search,
       AppRoutes.inventory,
       AppRoutes.expiry,
       AppRoutes.settings,

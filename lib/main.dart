@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import 'package:medicine_lab_reader/core/ads/ads_cubit.dart';
 import 'package:medicine_lab_reader/core/app.dart';
 import 'package:medicine_lab_reader/core/base/base_usecase.dart';
 import 'package:medicine_lab_reader/core/constants/app_assets.dart';
@@ -21,4 +24,7 @@ Future<void> main() async {
   );
   // Refresh expiry reminders after launch; never blocks startup.
   sl<RescheduleRemindersUsecase>()(const NoParams());
+  // Ads: consent, then the SDK. Never blocks startup; the app is fully usable
+  // while this runs and if it fails.
+  unawaited(sl<AdsCubit>().start());
 }

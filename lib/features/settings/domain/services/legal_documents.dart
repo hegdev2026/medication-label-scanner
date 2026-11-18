@@ -4,7 +4,7 @@ import 'package:medicine_lab_reader/features/settings/domain/entities/legal_docu
 /// (`legal.*`); this only says which keys make up each document, in order.
 abstract final class LegalDocuments {
   /// Bump when either document changes in substance.
-  static final DateTime lastUpdated = DateTime(2026, 11, 12);
+  static final DateTime lastUpdated = DateTime(2026, 11, 18);
 
   static final LegalDocument terms = LegalDocument(
     titleKey: 'legal.termsTitle',

@@ -9,6 +9,7 @@ Future<bool> showConfirmDialog(
   required String title,
   required String message,
   String? confirmLabel,
+  String? cancelLabel,
 }) async =>
     await showDialog<bool>(
       context: context,
@@ -17,7 +18,7 @@ Future<bool> showConfirmDialog(
         content: Text(message),
         actions: [
           AppButton(
-            label: 'common.cancel'.tr(),
+            label: cancelLabel ?? 'common.cancel'.tr(),
             kind: AppButtonKind.text,
             expand: false,
             onPressed: () => dialogContext.pop(false),

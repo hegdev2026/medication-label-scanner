@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:medicine_lab_reader/common/widgets/confirm_dialog.dart';
 import 'package:medicine_lab_reader/common/widgets/custom_toast.dart';
 import 'package:medicine_lab_reader/common/widgets/loading_view.dart';
 import 'package:medicine_lab_reader/core/di/sl.dart';
@@ -34,6 +35,18 @@ class ScanPage extends StatelessWidget {
         if (s.status == ScanStatus.done && draft != null) {
           await context.push(AppRoutes.review, extra: draft);
           bloc.add(const ScanReset());
+        } else if (s.status == ScanStatus.consentNeeded) {
+          final origin = s.pendingOrigin;
+          final allowed = await showConfirmDialog(
+            context,
+            title: 'scan.consentTitle'.tr(),
+            message: 'scan.consentMsg'.tr(),
+            confirmLabel: 'scan.consentAllow'.tr(),
+            cancelLabel: 'scan.consentDeny'.tr(),
+          );
+          if (origin != null) {
+            bloc.add(ScanConsentAnswered(allowed: allowed, origin: origin));
+          }
         } else if (s.status == ScanStatus.failure) {
           final f = s.failure;
           if (f != null) {

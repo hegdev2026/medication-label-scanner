@@ -39,10 +39,23 @@ It is **not** meant for use by clinicians to make treatment decisions.
 5. Group medicines by how close the **printed** expiry date is: already
    expired, within 30, 60 or 90 days, or no date found.
 6. Send a reminder on the phone before the expiry date.
+7. Show a short **"About this medicine"** summary (uses, side effects, safety
+   advice) from public U.S. FDA drug labels (openFDA), found by the confirmed
+   medicine name. Only the name is sent online; results are cached on the
+   phone. The summary is shown only when the name matches exactly, is
+   labelled as general information, and may differ from the user's pack. It
+   can include package or label pictures from the FDA label.
+8. A **Search** tab shows the same summary for any medicine typed by name,
+   with "Did you mean" spelling suggestions. Nothing is saved.
+9. Optional **smart scan**: if the user agrees (asked once, changeable in
+   Settings), the photo is sent to an online text-reading service (OCR.space)
+   for more accurate reading. If the user says no, or the service is
+   unreachable, the photo is read on the phone only. The review step is
+   unchanged: the user checks and corrects every value.
 
 **It deliberately does not:**
 
-- Tell the user what a medicine is for, or how much to take.
+- Tell the user how much to take (no doses, schedules or interaction checks).
 - Check interactions, allergies or duplicates in therapy.
 - Suggest alternatives or generics.
 - Say that a medicine is "safe" or "OK to use". An unexpired date is not a
@@ -70,7 +83,7 @@ It is **not** meant for use by clinicians to make treatment decisions.
 | Several possible names or strengths | The user must choose; the app does not pick one. |
 | User trusts the app too much | A notice on screen and in the Terms states the app does not identify medicines or confirm safety. |
 | Missed reminder | The Terms say reminders are a convenience only and may arrive late or not at all. |
-| Privacy of health information | Photos and records stay on the phone. No account, no server, no cloud AI. |
+| Privacy of health information | Records stay on the phone and there is no account. Photos are read on the phone unless the user turns on smart scan. A medicine's name is sent to public health information services (openFDA, RxNorm, MedlinePlus, DailyMed, Wikipedia) for general information. |
 
 ## 6. How we will judge success
 

@@ -20,7 +20,9 @@ class ImageSourceServiceImpl implements ImageSourceService {
         source: origin == ImageOrigin.camera
             ? ImageSource.camera
             : ImageSource.gallery,
-        maxWidth: 2400,
+        // Sharp enough to read, small enough for the free online OCR (1 MB).
+        maxWidth: 2000,
+        imageQuality: 85,
       );
       return file?.path;
     }

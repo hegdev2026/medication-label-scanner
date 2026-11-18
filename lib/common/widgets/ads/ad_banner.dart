@@ -48,7 +48,10 @@ class _BannerViewState extends State<_BannerView> {
             ad.dispose();
           }
         },
-        onAdFailedToLoad: (ad, _) => ad.dispose(),
+        onAdFailedToLoad: (ad, e) {
+          debugPrint('Ads: banner failed: ${e.code} ${e.message}');
+          ad.dispose();
+        },
       ),
     ).load();
   }

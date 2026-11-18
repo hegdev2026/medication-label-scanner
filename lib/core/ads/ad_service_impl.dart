@@ -42,6 +42,25 @@ class AdServiceImpl implements AdService {
     }
   }
 
+  /// Debug builds can pretend to be in the EEA so the consent form can be
+  /// tested anywhere: `--dart-define=UMP_FORCE_EEA=true` plus the test device
+  /// id from the logcat line "Use RequestConfiguration...setTestDeviceIds".
+  /// Never applies to release builds.
+  static const _forceEea = bool.fromEnvironment('UMP_FORCE_EEA');
+  static const _testDeviceId = String.fromEnvironment('UMP_TEST_DEVICE_ID');
+
+  ConsentRequestParameters _consentParameters() {
+    if (kDebugMode && _forceEea && _testDeviceId.isNotEmpty) {
+      return ConsentRequestParameters(
+        consentDebugSettings: ConsentDebugSettings(
+          debugGeography: DebugGeography.debugGeographyEea,
+          testIdentifiers: [_testDeviceId],
+        ),
+      );
+    }
+    return ConsentRequestParameters();
+  }
+
   /// Google's User Messaging Platform: shows the consent form only where the
   /// user's region requires it.
   Future<void> _gatherConsent() async {
@@ -51,7 +70,7 @@ class AdServiceImpl implements AdService {
     }
 
     ConsentInformation.instance.requestConsentInfoUpdate(
-      ConsentRequestParameters(),
+      _consentParameters(),
       () => ConsentForm.loadAndShowConsentFormIfRequired((_) => finish()),
       (_) => finish(),
     );
@@ -91,8 +110,14 @@ class AdServiceImpl implements AdService {
       adUnitId: AdConfig.interstitial,
       request: _request,
       adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) => _interstitial = ad,
-        onAdFailedToLoad: (_) => _interstitial = null,
+        onAdLoaded: (ad) {
+          _interstitial = ad;
+          debugPrint('Ads: interstitial loaded');
+        },
+        onAdFailedToLoad: (e) {
+          _interstitial = null;
+          debugPrint('Ads: interstitial failed: ${e.code} ${e.message}');
+        },
       ),
     );
   }
@@ -106,8 +131,12 @@ class AdServiceImpl implements AdService {
         onAdLoaded: (ad) {
           _appOpen = ad;
           _appOpenLoadedAt = DateTime.now();
+          debugPrint('Ads: app open loaded');
         },
-        onAdFailedToLoad: (_) => _appOpen = null,
+        onAdFailedToLoad: (e) {
+          _appOpen = null;
+          debugPrint('Ads: app open failed: ${e.code} ${e.message}');
+        },
       ),
     );
   }

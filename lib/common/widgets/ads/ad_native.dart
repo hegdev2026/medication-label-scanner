@@ -40,7 +40,10 @@ class _NativeViewState extends State<_NativeView> {
             ad.dispose();
           }
         },
-        onAdFailedToLoad: (ad, _) => ad.dispose(),
+        onAdFailedToLoad: (ad, e) {
+          debugPrint('Ads: native failed: ${e.code} ${e.message}');
+          ad.dispose();
+        },
       ),
       nativeTemplateStyle: NativeTemplateStyle(
         templateType: TemplateType.small,

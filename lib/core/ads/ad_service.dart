@@ -1,6 +1,6 @@
 /// Everything the app needs from the ad SDK that is not a widget: consent,
 /// start-up and full-screen ads. Kept behind an interface so the rules around
-/// it (frequency, ad-free time) can be tested without the SDK.
+/// it (frequency, when not to show) can be tested without the SDK.
 abstract class AdService {
   /// Asks for consent where the law requires it (EEA/UK/other regions), then
   /// starts the SDK. True when ads may be requested; never throws.
@@ -13,6 +13,9 @@ abstract class AdService {
   /// Shows a loaded interstitial. False when none was ready or it failed.
   Future<bool> showInterstitial();
 
-  /// Plays a rewarded video. True only when the user earned the reward.
-  Future<bool> showRewarded();
+  /// Shows an App Open ad if a fresh one is loaded. False otherwise.
+  Future<bool> showAppOpen();
+
+  /// A full-screen ad is on screen right now.
+  bool get fullScreenShowing;
 }

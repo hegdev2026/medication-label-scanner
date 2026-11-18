@@ -17,10 +17,10 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:image_picker/image_picker.dart' as _i183;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:logger/logger.dart' as _i974;
-import 'package:medicine_lab_reader/core/ads/ad_free_store.dart' as _i1035;
 import 'package:medicine_lab_reader/core/ads/ad_service.dart' as _i329;
 import 'package:medicine_lab_reader/core/ads/ad_service_impl.dart' as _i581;
 import 'package:medicine_lab_reader/core/ads/ads_cubit.dart' as _i565;
+import 'package:medicine_lab_reader/core/ads/app_open_gate.dart' as _i225;
 import 'package:medicine_lab_reader/core/database/app_database.dart' as _i818;
 import 'package:medicine_lab_reader/core/di/register_module.dart' as _i298;
 import 'package:medicine_lab_reader/core/network/dio/dio_client.dart' as _i49;
@@ -159,6 +159,7 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
     );
     gh.factory<_i512.SearchCubit>(() => _i512.SearchCubit());
+    gh.lazySingleton<_i225.AppOpenGate>(() => _i225.AppOpenGate());
     gh.lazySingleton<_i818.AppDatabase>(() => registerModule.database);
     gh.lazySingleton<_i974.Logger>(() => registerModule.logger);
     gh.lazySingleton<_i183.ImagePicker>(() => registerModule.imagePicker);
@@ -172,25 +173,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1060.MedicineParser>(() => _i1060.MedicineParser());
     gh.factory<bool>(() => registerModule.isMobile, instanceName: 'isMobile');
     gh.lazySingleton<_i136.ImageStorage>(() => _i745.ImageStorageService());
-    gh.lazySingleton<_i367.ImageSourceService>(
-      () => _i617.ImageSourceServiceImpl(
-        gh<_i183.ImagePicker>(),
-        gh<bool>(instanceName: 'isMobile'),
-      ),
-    );
     gh.lazySingleton<_i17.NetworkInfo>(() => _i17.NetworkInfoImpl());
-    gh.lazySingleton<_i232.ReminderScheduler>(
-      () => _i731.NotificationService(
-        gh<_i163.FlutterLocalNotificationsPlugin>(),
-        gh<_i974.Logger>(),
-      ),
-    );
     gh.lazySingleton<_i329.AdService>(() => _i581.AdServiceImpl());
+    gh.lazySingleton<_i565.AdsCubit>(
+      () => _i565.AdsCubit(gh<_i329.AdService>(), gh<_i225.AppOpenGate>()),
+    );
     gh.lazySingleton<_i656.CheckExpiry>(
       () => _i656.CheckExpiry(gh<_i298.Clock>()),
-    );
-    gh.lazySingleton<_i1035.AdFreeStore>(
-      () => _i1035.AdFreeStore(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i546.ThemeCubit>(
       () => _i546.ThemeCubit(gh<_i460.SharedPreferences>()),
@@ -207,11 +196,22 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1067.MedicineLocalDataSource>(
       () => _i1067.MedicineLocalDataSource(gh<_i818.AppDatabase>()),
     );
+    gh.lazySingleton<_i367.ImageSourceService>(
+      () => _i617.ImageSourceServiceImpl(
+        gh<_i183.ImagePicker>(),
+        gh<bool>(instanceName: 'isMobile'),
+        gh<_i225.AppOpenGate>(),
+      ),
+    );
+    gh.lazySingleton<_i232.ReminderScheduler>(
+      () => _i731.NotificationService(
+        gh<_i163.FlutterLocalNotificationsPlugin>(),
+        gh<_i974.Logger>(),
+        gh<_i225.AppOpenGate>(),
+      ),
+    );
     gh.factory<_i554.CloudScanCubit>(
       () => _i554.CloudScanCubit(gh<_i633.CloudScanSettings>()),
-    );
-    gh.lazySingleton<_i565.AdsCubit>(
-      () => _i565.AdsCubit(gh<_i329.AdService>(), gh<_i1035.AdFreeStore>()),
     );
     gh.lazySingleton<_i318.CloudOcrService>(
       () => _i484.OcrSpaceService(gh<_i49.DioClient>()),

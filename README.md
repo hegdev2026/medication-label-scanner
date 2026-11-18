@@ -207,7 +207,7 @@ create `env.json` before building:
 
 ## Ads (Google AdMob)
 
-The app shows banner, native, interstitial and rewarded ads. Debug builds use
+The app shows banner, native, interstitial and App Open ads. Debug builds use
 Google's test ads; release builds use the real ad unit ids from `env.json`.
 Setup, placements, consent and the Play Store checklist are in
 [docs/ADS.md](docs/ADS.md).

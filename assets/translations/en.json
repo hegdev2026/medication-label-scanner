@@ -300,10 +300,7 @@
   "ads": {
     "label": "Advertisement",
     "title": "Ads",
-    "removeBody": "MedScan is free and shows ads from Google. Watch one short video to hide ads for 24 hours.",
-    "removeButton": "Watch a video to hide ads",
-    "freeUntil": "Ads are hidden until {}. Thank you!",
-    "unavailable": "No video is available right now. Please try again later.",
-    "privacyChoices": "Ad privacy choices"
+    "privacyChoices": "Ad privacy choices",
+    "about": "MedScan is free and shows ads from Google. You can review or change your ad privacy choices at any time."
   }
 }

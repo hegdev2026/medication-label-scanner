@@ -6,8 +6,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:medicine_lab_reader/common/widgets/app_button.dart';
 import 'package:medicine_lab_reader/common/widgets/app_pill.dart';
 import 'package:medicine_lab_reader/common/widgets/app_surface.dart';
+import 'package:medicine_lab_reader/core/ads/app_open_gate.dart';
 import 'package:medicine_lab_reader/core/constants/app_api.dart';
 import 'package:medicine_lab_reader/core/constants/app_colors.dart';
+import 'package:medicine_lab_reader/core/di/sl.dart';
 import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 import 'package:medicine_lab_reader/core/theme/app_typography.dart';
 import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine_info.dart';
@@ -74,8 +76,10 @@ class MedicineInfoCard extends StatelessWidget {
             icon: Icons.open_in_new,
             kind: AppButtonKind.tonal,
             expand: true,
-            onPressed: () =>
-                launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+            onPressed: () {
+              sl<AppOpenGate>().leavingTemporarily();
+              launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+            },
           ),
         ],
       ],

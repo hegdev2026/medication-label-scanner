@@ -11,7 +11,7 @@ abstract final class AdConfig {
   static const _banner = String.fromEnvironment('ADMOB_BANNER_ID');
   static const _native = String.fromEnvironment('ADMOB_NATIVE_ID');
   static const _interstitial = String.fromEnvironment('ADMOB_INTERSTITIAL_ID');
-  static const _rewarded = String.fromEnvironment('ADMOB_REWARDED_ID');
+  static const _appOpen = String.fromEnvironment('ADMOB_APP_OPEN_ID');
 
   /// The Google Mobile Ads plugin runs on Android and iOS only.
   static bool get supported =>
@@ -40,14 +40,14 @@ abstract final class AdConfig {
             ? 'ca-app-pub-3940256099942544/1033173712'
             : 'ca-app-pub-3940256099942544/4411468910');
 
-  static String get rewarded => kReleaseMode
-      ? _rewarded
+  static String get appOpen => kReleaseMode
+      ? _appOpen
       : (_android
-            ? 'ca-app-pub-3940256099942544/5224354917'
-            : 'ca-app-pub-3940256099942544/1712485313');
+            ? 'ca-app-pub-3940256099942544/9257395921'
+            : 'ca-app-pub-3940256099942544/5575463023');
 
   static bool get bannerOn => supported && banner.isNotEmpty;
   static bool get nativeOn => supported && native.isNotEmpty;
   static bool get interstitialOn => supported && interstitial.isNotEmpty;
-  static bool get rewardedOn => supported && rewarded.isNotEmpty;
+  static bool get appOpenOn => supported && appOpen.isNotEmpty;
 }

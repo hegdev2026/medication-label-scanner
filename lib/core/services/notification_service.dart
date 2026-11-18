@@ -6,6 +6,7 @@ import 'package:logger/logger.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'package:medicine_lab_reader/core/ads/app_open_gate.dart';
 import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine.dart';
 import 'package:medicine_lab_reader/features/medicines/domain/services/reminder_scheduler.dart';
 
@@ -13,9 +14,10 @@ import 'package:medicine_lab_reader/features/medicines/domain/services/reminder_
 /// the OS and may be deferred; the app always shows expiry status in-app too.
 @LazySingleton(as: ReminderScheduler)
 class NotificationService implements ReminderScheduler {
-  NotificationService(this._plugin, this._log);
+  NotificationService(this._plugin, this._log, this._appOpenGate);
   final FlutterLocalNotificationsPlugin _plugin;
   final Logger _log;
+  final AppOpenGate _appOpenGate;
 
   static const _offsetsDays = [30, 7];
   bool _ready = false;
@@ -39,6 +41,10 @@ class NotificationService implements ReminderScheduler {
           macOS: DarwinInitializationSettings(),
           linux: LinuxInitializationSettings(defaultActionName: 'Open'),
         ),
+        // Someone tapped a reminder: take them straight to the app, with no
+        // App Open ad in the way.
+        onDidReceiveNotificationResponse: (_) =>
+            _appOpenGate.holdFor(const Duration(seconds: 30), DateTime.now()),
       );
       if (Platform.isAndroid) {
         await _plugin

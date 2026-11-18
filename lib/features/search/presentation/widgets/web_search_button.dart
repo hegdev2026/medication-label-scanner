@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:medicine_lab_reader/common/widgets/app_button.dart';
+import 'package:medicine_lab_reader/core/ads/app_open_gate.dart';
+import 'package:medicine_lab_reader/core/di/sl.dart';
 import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 
 /// Last resort for a name no free medicine source knows: opens the user's own
@@ -19,10 +21,13 @@ class WebSearchButton extends StatelessWidget {
       icon: Icons.travel_explore,
       kind: AppButtonKind.tonal,
       expand: true,
-      onPressed: () => launchUrl(
-        Uri.https('www.google.com', '/search', {'q': '$name medicine'}),
-        mode: LaunchMode.externalApplication,
-      ),
+      onPressed: () {
+        sl<AppOpenGate>().leavingTemporarily();
+        launchUrl(
+          Uri.https('www.google.com', '/search', {'q': '$name medicine'}),
+          mode: LaunchMode.externalApplication,
+        );
+      },
     ),
   );
 }

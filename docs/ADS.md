@@ -6,13 +6,18 @@ The app shows ads from Google AdMob. Formats and where they appear:
 |---|---|---|
 | Banner | Home tab, bottom | Adaptive width |
 | Native | Search results, below the notes | In the app's colours, labelled "Advertisement" |
-| Interstitial | After adding a medicine | Only every 3rd add and at least 4 min apart; never after an edit |
-| Rewarded | Settings → Ads | Watching a video hides ads for 24 hours |
+| Interstitial | After adding a medicine | Every 3rd add, at least 4 min apart; never after an edit |
+| App Open | When returning to the app | Only after 3+ minutes away and at most once per 30 minutes; never on a cold start |
 
 There are no ads on the scanner, the review/edit form, the consent dialog or
-the medicine details screen, and ads never use saved medicines. App Open ads
-are deliberately not used (they cover the screen the moment the app opens,
-including expiry-reminder taps).
+the medicine details screen, and ads never use saved medicines. There are no
+rewarded ads, so nothing in the app lets a user switch ads off.
+
+**App Open safety.** Coming back to the app is not always "opening" it, so no
+App Open ad is shown after: the camera or gallery (a photo being taken or
+picked), a web link opened from the app, a tapped expiry-reminder notification
+(held for 30 seconds), or one of our own full-screen ads closing. It also
+never shows on a cold start, so reminders and startup are never delayed.
 
 ## Test vs real ads
 
@@ -27,7 +32,7 @@ console (https://admob.google.com), then fill in `env.json`:
   "ADMOB_BANNER_ID": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX",
   "ADMOB_NATIVE_ID": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX",
   "ADMOB_INTERSTITIAL_ID": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX",
-  "ADMOB_REWARDED_ID": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+  "ADMOB_APP_OPEN_ID": "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
 }
 ```
 

@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:medicine_lab_reader/common/widgets/ads/ad_breaks.dart';
 import 'package:medicine_lab_reader/common/widgets/confirm_dialog.dart';
 import 'package:medicine_lab_reader/common/widgets/custom_toast.dart';
 import 'package:medicine_lab_reader/common/widgets/empty_state.dart';
-import 'package:medicine_lab_reader/core/ads/ads_cubit.dart';
 import 'package:medicine_lab_reader/core/di/sl.dart';
 import 'package:medicine_lab_reader/core/error/failure_text.dart';
 import 'package:medicine_lab_reader/core/error/failures.dart';
@@ -40,7 +40,7 @@ class MedicineFormPage extends StatelessWidget {
         } else if (id != null) {
           context.go(AppRoutes.details(id));
           // A natural break after adding a medicine (never after an edit).
-          if (medicineId == null) unawaited(sl<AdsCubit>().onMedicineAdded());
+          if (medicineId == null) unawaited(runAdBreakAfterAdd());
         }
       case FormStatus.duplicateFound:
         final name = s.duplicates.isEmpty ? '' : s.duplicates.first.name;

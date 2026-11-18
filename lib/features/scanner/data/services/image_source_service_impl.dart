@@ -2,12 +2,18 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:injectable/injectable.dart';
 
+import 'package:medicine_lab_reader/core/ads/app_open_gate.dart';
 import 'package:medicine_lab_reader/features/scanner/domain/services/image_source_service.dart';
 
 @LazySingleton(as: ImageSourceService)
 class ImageSourceServiceImpl implements ImageSourceService {
-  ImageSourceServiceImpl(this._picker, @Named('isMobile') this._isMobile);
+  ImageSourceServiceImpl(
+    this._picker,
+    @Named('isMobile') this._isMobile,
+    this._appOpenGate,
+  );
   final ImagePicker _picker;
+  final AppOpenGate _appOpenGate;
   final bool _isMobile;
 
   @override
@@ -15,6 +21,8 @@ class ImageSourceServiceImpl implements ImageSourceService {
 
   @override
   Future<String?> pick(ImageOrigin origin) async {
+    // Coming back from the camera or gallery is not "opening" the app.
+    _appOpenGate.leavingTemporarily();
     if (_isMobile) {
       final file = await _picker.pickImage(
         source: origin == ImageOrigin.camera

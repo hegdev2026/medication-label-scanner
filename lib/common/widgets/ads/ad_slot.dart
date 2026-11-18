@@ -8,7 +8,7 @@ import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 import 'package:medicine_lab_reader/core/theme/app_typography.dart';
 
 /// Frames an ad: nothing at all while ads are off (not ready, unsupported
-/// platform or an ad-free period), otherwise a small "Advertisement" label
+/// platform or the SDK has not started), otherwise a small "Advertisement" label
 /// above [child] so an ad is never mistaken for medicine information.
 class AdSlot extends StatelessWidget {
   const AdSlot({super.key, required this.enabled, required this.builder});
@@ -21,10 +21,9 @@ class AdSlot extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!enabled) return const SizedBox.shrink();
     return BlocBuilder<AdsCubit, AdsState>(
-      buildWhen: (a, b) =>
-          a.showAds(DateTime.now()) != b.showAds(DateTime.now()),
+      buildWhen: (a, b) => a.showAds != b.showAds,
       builder: (context, s) {
-        if (!s.showAds(DateTime.now())) return const SizedBox.shrink();
+        if (!s.showAds) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
           child: Column(

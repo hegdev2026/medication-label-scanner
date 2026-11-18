@@ -13,8 +13,12 @@ import 'package:medicine_lab_reader/core/ads/ad_service.dart';
 class AdServiceImpl implements AdService {
   bool _started = false;
   InterstitialAd? _interstitial;
-  RewardedAd? _rewarded;
+  AppOpenAd? _appOpen;
+  DateTime? _appOpenLoadedAt;
+  bool _showing = false;
 
+  /// Google: an App Open ad is stale after 4 hours.
+  static const _appOpenLife = Duration(hours: 4);
   static const _request = AdRequest();
 
   @override
@@ -30,7 +34,7 @@ class AdServiceImpl implements AdService {
       await MobileAds.instance.initialize();
       _started = true;
       _loadInterstitial();
-      _loadRewarded();
+      _loadAppOpen();
       return true;
     } on Exception catch (e) {
       debugPrint('Ads did not start: $e');
@@ -78,6 +82,9 @@ class AdServiceImpl implements AdService {
     }
   }
 
+  @override
+  bool get fullScreenShowing => _showing;
+
   void _loadInterstitial() {
     if (!_started || !AdConfig.interstitialOn || _interstitial != null) return;
     InterstitialAd.load(
@@ -90,14 +97,17 @@ class AdServiceImpl implements AdService {
     );
   }
 
-  void _loadRewarded() {
-    if (!_started || !AdConfig.rewardedOn || _rewarded != null) return;
-    RewardedAd.load(
-      adUnitId: AdConfig.rewarded,
+  void _loadAppOpen() {
+    if (!_started || !AdConfig.appOpenOn || _appOpen != null) return;
+    AppOpenAd.load(
+      adUnitId: AdConfig.appOpen,
       request: _request,
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) => _rewarded = ad,
-        onAdFailedToLoad: (_) => _rewarded = null,
+      adLoadCallback: AppOpenAdLoadCallback(
+        onAdLoaded: (ad) {
+          _appOpen = ad;
+          _appOpenLoadedAt = DateTime.now();
+        },
+        onAdFailedToLoad: (_) => _appOpen = null,
       ),
     );
   }
@@ -113,49 +123,61 @@ class AdServiceImpl implements AdService {
     final done = Completer<bool>();
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (a) {
+        _showing = false;
         a.dispose();
         _loadInterstitial();
         if (!done.isCompleted) done.complete(true);
       },
       onAdFailedToShowFullScreenContent: (a, _) {
+        _showing = false;
         a.dispose();
         _loadInterstitial();
         if (!done.isCompleted) done.complete(false);
       },
     );
+    _showing = true;
     try {
       await ad.show();
     } on Exception {
+      _showing = false;
       return false;
     }
     return done.future;
   }
 
   @override
-  Future<bool> showRewarded() async {
-    final ad = _rewarded;
-    if (ad == null) {
-      _loadRewarded();
+  Future<bool> showAppOpen() async {
+    final loadedAt = _appOpenLoadedAt;
+    final stale =
+        loadedAt == null || DateTime.now().difference(loadedAt) > _appOpenLife;
+    final ad = _appOpen;
+    if (ad == null || stale) {
+      await ad?.dispose();
+      _appOpen = null;
+      _loadAppOpen();
       return false;
     }
-    _rewarded = null;
-    var earned = false;
+    _appOpen = null;
     final done = Completer<bool>();
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (a) {
+        _showing = false;
         a.dispose();
-        _loadRewarded();
-        if (!done.isCompleted) done.complete(earned);
+        _loadAppOpen();
+        if (!done.isCompleted) done.complete(true);
       },
       onAdFailedToShowFullScreenContent: (a, _) {
+        _showing = false;
         a.dispose();
-        _loadRewarded();
+        _loadAppOpen();
         if (!done.isCompleted) done.complete(false);
       },
     );
+    _showing = true;
     try {
-      await ad.show(onUserEarnedReward: (_, _) => earned = true);
+      await ad.show();
     } on Exception {
+      _showing = false;
       return false;
     }
     return done.future;

@@ -72,13 +72,25 @@ runs:
         KEY_PASSWORD: ${{ inputs.key-password }}
       run: |
         set -euo pipefail
+        # A trailing new line or space pasted into a secret is the usual cause of a
+        # "wrong password", so strip those (passwords here are random, no spaces).
+        STORE_PASSWORD=$(printf '%s' "$STORE_PASSWORD" | tr -d '\r\n ')
+        KEY_PASSWORD=$(printf '%s' "$KEY_PASSWORD" | tr -d '\r\n ')
+        KEY_ALIAS=$(printf '%s' "$KEY_ALIAS" | tr -d '\r\n ')
         KS="$RUNNER_TEMP/upload-keystore.jks"
         printf '%s' "$KEYSTORE_B64" | tr -d '\r\n ' | base64 -d > "$KS"
         test -s "$KS" || { echo "::error::ANDROID_KEYSTORE_BASE64 did not decode to anything."; exit 1; }
+        # Lengths and sizes only, never the values. Compare them with your local
+        # files if this step fails.
+        echo "keystore: $(wc -c < "$KS") bytes decoded from ${#KEYSTORE_B64} base64 characters"
+        echo "alias: ${#KEY_ALIAS} characters, store password: ${#STORE_PASSWORD} characters"
         # Proves the passwords open the keystore now, instead of a confusing
         # Gradle failure ten minutes into the build.
-        keytool -list -keystore "$KS" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null \
-          || { echo "::error::The keystore did not open with the given password and alias."; exit 1; }
+        if ! OUT=$(keytool -list -keystore "$KS" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" 2>&1); then
+          echo "$OUT" | grep -v "$STORE_PASSWORD" | head -5
+          echo "::error::The keystore did not open. Check ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS, and that ANDROID_KEYSTORE_BASE64 is the complete text."
+          exit 1
+        fi
         {
           echo "storeFile=$KS"
           echo "storePassword=$STORE_PASSWORD"

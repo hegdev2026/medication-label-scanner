@@ -27,15 +27,17 @@ main ──► staging ──► qa ──► prod
           └───────────────────── builds an APK ► a file you download from GitHub
 ```
 
-Code moves along the line by **merging**: `main → staging → qa → prod`. A push to
-any other branch builds nothing. A pull request into any of the four branches runs
-the checks only.
+Code moves along the line by **merging**: `main → staging → qa → prod`. Each branch
+has its own workflow, so the Actions page for a run shows **only that branch's
+steps**, with no skipped jobs from the other branches.
 
-| Branch | A push or merge does this | Where it ends up |
+| You push or merge to | The run shows | Where it ends up |
 |---|---|---|
-| `staging` | format, analyze and test, then builds a signed, obfuscated **APK** | the run's **Artifacts** on GitHub, kept 30 days |
-| `qa` | the same checks, then builds a signed, obfuscated **AAB** and uploads it | Google Play **internal testing** |
-| `prod` | the same checks, then **promotes** the latest internal release | Google Play **production** |
+| `staging` | **Checks**, then **Build staging APK** | the run's **Artifacts** on GitHub, kept 30 days |
+| `qa` | **Checks**, then **Build AAB and upload to Play internal testing** | Google Play **internal testing** |
+| `prod` | **Checks**, then **Promote internal release to Play production** | Google Play **production** |
+| a pull request into any of these | **Checks** only | nothing |
+| any other branch (your feature branches) | nothing runs | nothing |
 
 Things that are easy to get wrong:
 
@@ -53,8 +55,11 @@ Things that are easy to get wrong:
 
 | File | What it does |
 |---|---|
-| `.github/workflows/android.yml` | The pipeline. Triggers, jobs, and the order they run in. |
-| `.github/actions/setup/action.yml` | Shared step: Java 17, the pinned Flutter, `flutter pub get`. |
+| `.github/workflows/checks.yml` | The quality gates (format, analyze, test). Runs on pull requests, and the three workflows below call it first. |
+| `.github/workflows/staging.yml` | On a push to `staging`: checks, then the signed APK. Nothing to do with Google Play. |
+| `.github/workflows/qa.yml` | On a push to `qa`: checks, then the AAB, uploaded to Play internal testing. |
+| `.github/workflows/prod.yml` | On a push to `prod`: checks, then promotes the internal release to production. |
+| `.github/actions/setup/action.yml` | Shared step: Java 17, the pinned Flutter, `flutter pub get`. The Flutter version is set here, once. |
 | `.github/actions/prepare-build/action.yml` | Shared step: writes `env.json` from a secret, decodes the keystore and writes `android/key.properties`. It checks every part, so a typo fails early with a clear message. |
 | `android/fastlane/Fastfile` | The Play lanes: `validate`, `internal` (upload) and `promote` (internal to production). |
 | `android/fastlane/Appfile` | The package name (`com.hegdev.medscan`) and the key path. |
@@ -62,13 +67,13 @@ Things that are easy to get wrong:
 | `Makefile` | `make apk` and `make aab` build locally, obfuscated by default. |
 | `docs/CI_CD.md` | This document. |
 
-Settings you can change at the top of `android.yml`:
+Settings you can change:
 
-| Setting | Meaning |
-|---|---|
-| `FLUTTER_VERSION` | The Flutter used in CI. Keep it equal to `flutter --version` on your machine. |
-| `VERSION_CODE_BASE` | The build number sent to Play is this plus the run number. Raise it, never lower it. |
-| `RELEASE_NOTES` | The "What's new" text on Play. One fixed sentence, 500 characters at most. |
+| Setting | Where | Meaning |
+|---|---|---|
+| Flutter version | `flutter-version` default in `.github/actions/setup/action.yml` | The Flutter used in CI for every workflow. Keep it equal to `flutter --version` on your machine. |
+| `VERSION_CODE_BASE` | `qa.yml` | The build number sent to Play is this plus the run number of the `qa` workflow. Raise it, never lower it. |
+| `RELEASE_NOTES` | `qa.yml` | The "What's new" text on Play. One fixed sentence, 500 characters at most. |
 
 ## 3. One-time setup
 
@@ -206,7 +211,7 @@ environment the first time a run uses it, but without any reviewers.)
 
 ### 3.8 Create the other branches
 
-The workflow file must exist on a branch before pushing to that branch starts
+The workflow files must exist on a branch before pushing to that branch starts
 anything, so `main` goes first (done in 3.5). Then:
 
 ```bash
@@ -214,8 +219,8 @@ git branch staging && git branch qa && git branch prod
 git push -u origin staging qa prod
 ```
 
-**Creating a branch counts as a push.** `staging`, `qa` and `prod` each start a run
-the moment they appear. They fail until the secrets, the first release and the Play
+**Creating a branch counts as a push.** `staging`, `qa` and `prod` each start their
+own run the moment they appear. They fail until the secrets, the first release and the Play
 permissions are in place, which is harmless but noisy. Add the secrets before
 pushing the three branches.
 
@@ -292,17 +297,18 @@ same code. Add a commit to the source branch first.
 To watch a run, open the **Actions** tab. To get the staging APK, open the finished
 run and download it from **Artifacts**.
 
-To change the "What's new" text, edit `RELEASE_NOTES` in `android.yml`. To roll out
+To change the "What's new" text, edit `RELEASE_NOTES` in `qa.yml`. To roll out
 to 10% first, set `PLAY_ROLLOUT` to `0.1` before the `prod` push.
 
 ## 6. Versions, obfuscation and crash traces
 
 - **versionName** comes from `pubspec.yaml` (`version: 1.0.0+1`, the part before `+`).
   Change it when you release something users will notice.
-- **versionCode** is sent as `VERSION_CODE_BASE + the workflow run number`. Play
-  rejects a versionCode it has already seen, so raise `VERSION_CODE_BASE` if the run
-  counter ever resets, and never lower it. A re-run of a failed job reuses its number,
-  which is fine because a failed upload never used it.
+- **versionCode** is sent as `VERSION_CODE_BASE + the run number of the qa workflow`.
+  Only `qa.yml` uploads builds to Play, so only its counter matters. Play rejects a
+  versionCode it has already seen, so raise `VERSION_CODE_BASE` in `qa.yml` if you
+  ever upload by hand with a higher number, and never lower it. A re-run of a failed
+  job reuses its number, which is fine because a failed upload never used it.
 - **Obfuscation** is on for every release build (`--obfuscate`, with the symbol files
   kept). It makes the Dart code hard to read in the app file, but crash traces from
   those builds look scrambled.
@@ -335,7 +341,8 @@ to 10% first, set `PLAY_ROLLOUT` to `0.1` before the `prod` push.
 
 | What you see | Likely cause and fix |
 |---|---|
-| The workflow does not start | The branch has no workflow file yet. Merge it into `main` first, then create the branches from `main`. Also check the branch name is exactly `staging`, `qa` or `prod`. |
+| The workflow does not start | The branch has no workflow files yet. Merge them into `main` first, then create the branches from `main`. Also check the branch name is exactly `staging`, `qa` or `prod`. |
+| The run shows only **Checks** | It ran for a pull request or a push to another branch. Only a push or merge to `staging`, `qa` or `prod` builds or uploads. |
 | `The ENV_JSON secret is empty` | Add `ENV_JSON` with the whole contents of `env.json`. Secret names are case-sensitive. |
 | `env.json is missing [...]` | The JSON in the secret is missing `ADMOB_APP_ID` or `ADMOB_BANNER_ID`. Paste it again from your local file. |
 | `The keystore did not open with the given password and alias` | Wrong `ANDROID_KEYSTORE_PASSWORD` or `ANDROID_KEY_ALIAS`, or the base64 text was cut off. Re-encode with `base64 -w0` and paste it again. |
@@ -344,7 +351,7 @@ to 10% first, set `PLAY_ROLLOUT` to `0.1` before the `prod` push.
 | Upload fails with **401** or **403** | The service account has no permission yet. Check it is **Active** under **Users and permissions** and has the four permissions. Wait up to an hour after inviting it. |
 | `Package not found: com.hegdev.medscan` | The app does not exist in Play Console for this developer account, or the service account is not linked to it. Create the app, then invite the account with access to it. |
 | `Only releases with status draft may be created on draft app` | The app is not published yet. Set the variable `PLAY_RELEASE_STATUS` to `draft`, or make the first release by hand. |
-| `Version code ... has already been used` | Play has seen that versionCode. Raise `VERSION_CODE_BASE` in `android.yml`. |
+| `Version code ... has already been used` | Play has seen that versionCode. Raise `VERSION_CODE_BASE` in `qa.yml`. |
 | Release notes error about a language | The release notes are written to `en-GB`. Match it to your store listing's default language by changing `PLAY_LANGUAGE` in the Fastfile. |
 | The `prod` run says there is nothing to promote | No release exists on the internal track. Do a `qa` push first. |
 | `prod` is refused by Play | Production access has not been granted yet. See section 4.2. |

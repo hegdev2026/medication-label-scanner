@@ -1,4 +1,4 @@
-package com.subshegde.medscan
+package com.hegdev.medscan
 
 import io.flutter.embedding.android.FlutterActivity
 

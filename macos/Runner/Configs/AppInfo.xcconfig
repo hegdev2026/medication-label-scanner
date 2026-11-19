@@ -8,7 +8,7 @@
 PRODUCT_NAME = medicine_lab_reader
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.subshegde.medscan
+PRODUCT_BUNDLE_IDENTIFIER = com.hegdev.medscan
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 subshegde. All rights reserved.

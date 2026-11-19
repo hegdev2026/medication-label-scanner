@@ -17,7 +17,7 @@ val keyProps = Properties().apply {
 }
 
 android {
-    namespace = "com.subshegde.medscan"
+    namespace = "com.hegdev.medscan"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -32,7 +32,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.subshegde.medscan"
+        applicationId = "com.hegdev.medscan"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // Google Mobile Ads needs API 23 or newer.

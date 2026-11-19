@@ -154,14 +154,22 @@ layouts, and that every legal-text key exists in both languages.
 
 ## Privacy
 
-Photos, the text read from them and saved details stay on the device. The one
-network request the app may make is downloading its typeface from Google Fonts
-on first run, which carries no medicine data; bundling the font would remove it.
-See the in-app Privacy Policy (Settings → Legal) for the full text, or read it
-online: [MedScan Privacy Policy](https://hegdev2026.github.io/medscan-privacy/).
-The legal
-text is a sensible default and should be reviewed by a lawyer before release, and
-the Hindi translations should be checked by a native speaker.
+Saved medicines, expiry dates and scan photos stay on the device. There is no
+account and no server of ours. The app makes these network requests, and only
+these:
+
+- **Medicine search and info:** the medicine name you search for goes to public
+  health sources (DailyMed, MedlinePlus, openFDA, PubChem, Wikipedia/Wikidata).
+- **Smart scan (optional, off until you turn it on):** the label photo goes to
+  OCR.space to be read. Without it, photos are read on the device.
+- **Ads:** Google AdMob serves ads and may use the advertising ID. In the EEA, UK
+  and Switzerland the app asks for consent first (Google's UMP), and Settings lets
+  people change that choice.
+- **Typeface:** Google Fonts is downloaded on first run and carries no medicine
+  data; bundling the font would remove it.
+
+See the in-app Privacy Policy (Settings → Legal) for the full text. The legal text is a sensible default and should be reviewed by a lawyer before
+release, and the Hindi translations should be checked by a native speaker.
 
 ## Safety rules for contributors
 

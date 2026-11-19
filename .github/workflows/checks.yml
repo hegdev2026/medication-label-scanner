@@ -1,0 +1,32 @@
+# Quality gates: format, analyze, test.
+#
+# Runs on every pull request into main/staging/qa/prod, and is reused by the
+# staging, qa and prod workflows so nothing builds or uploads unless it passes.
+name: Checks
+
+on:
+  pull_request:
+    branches: [main, staging, qa, prod]
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Analyze, format, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed lib test
+      - name: Analyze
+        run: flutter analyze
+      - name: Test
+        run: flutter test

@@ -1,0 +1,86 @@
+# Push or merge to `qa`: checks, then a signed, obfuscated AAB uploaded to Google
+# Play internal testing.
+name: QA to Play internal testing
+
+on:
+  push:
+    branches: [qa]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel an upload half way: it can leave Play with a versionCode that was
+# used but never released.
+concurrency:
+  group: qa
+  cancel-in-progress: false
+
+env:
+  # versionCode sent to Play = VERSION_CODE_BASE + run number of THIS workflow.
+  # Play rejects a versionCode it has already seen, so raise the base, never lower it.
+  VERSION_CODE_BASE: "100"
+  # "What's new" on Play. One fixed sentence on purpose; 500 characters at most.
+  RELEASE_NOTES: "Bug fixes and enhancements."
+
+jobs:
+  checks:
+    name: Checks
+    uses: ./.github/workflows/checks.yml
+
+  upload:
+    name: Build AAB and upload to Play internal testing
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Add required reviewers to this environment (repo Settings > Environments)
+    # for a manual approval before anything reaches Play.
+    environment: play-internal
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/prepare-build
+        with:
+          env-json: ${{ secrets.ENV_JSON }}
+          keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          store-password: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          key-alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          key-password: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      - name: Build AAB (obfuscated)
+        run: |
+          set -euo pipefail
+          BUILD_NUMBER=$((VERSION_CODE_BASE + GITHUB_RUN_NUMBER))
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          flutter build appbundle --release \
+            --dart-define-from-file=env.json \
+            --obfuscate --split-debug-info=build/symbols/aab \
+            --build-number="$BUILD_NUMBER"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: android
+      - name: Play service account
+        env:
+          PLAY_KEY: ${{ secrets.PLAY_STORE_JSON_KEY_DATA }}
+        run: |
+          set -euo pipefail
+          test -n "$PLAY_KEY" || { echo "::error::PLAY_STORE_JSON_KEY_DATA is empty."; exit 1; }
+          printf '%s' "$PLAY_KEY" > android/fastlane/play-service-account.json
+          python3 -c "import json; json.load(open('android/fastlane/play-service-account.json'))"
+      - name: Upload to internal testing
+        working-directory: android
+        env:
+          SUPPLY_JSON_KEY: ${{ github.workspace }}/android/fastlane/play-service-account.json
+          AAB_PATH: ${{ github.workspace }}/build/app/outputs/bundle/release/app-release.aab
+          RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
+          # "draft" until the very first release exists; see docs/CI_CD.md.
+          RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
+        run: bundle exec fastlane android internal
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v5
+        with:
+          name: medscan-aab-symbols-${{ github.run_number }}
+          path: build/symbols/aab
+          retention-days: 90
+          if-no-files-found: error

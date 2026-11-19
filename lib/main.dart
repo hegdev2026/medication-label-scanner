@@ -22,10 +22,7 @@ Future<void> main() async {
       child: const MedScanApp(),
     ),
   );
-  // Refresh expiry reminders after launch; never blocks startup.
   sl<RescheduleRemindersUsecase>()(const NoParams());
-  // Ads: consent, then the SDK. Never blocks startup; the app is fully usable
-  // while this runs and if it fails.
   unawaited(
     sl<AdsCubit>().start().then((_) => sl<AdsCubit>().observeLifecycle()),
   );

@@ -3,16 +3,38 @@ description: Java 17, the pinned Flutter SDK and `flutter pub get`.
 
 inputs:
   flutter-version:
-    description: Exact Flutter version. Keep it equal to the one used locally.
-    required: true
+    description: >
+      Exact Flutter version. The one place it is set for every workflow; keep it
+      equal to `flutter --version` on your machine.
+    required: false
+    default: "3.41.6"
 
 runs:
   using: composite
   steps:
-    - uses: actions/setup-java@v4
+    - uses: actions/setup-java@v5
       with:
         distribution: temurin
         java-version: "17"
+        # Keeps downloaded Gradle dependencies between runs; the first build is
+        # slow, later ones are much faster.
+        cache: gradle
+
+    # android/gradle.properties asks for an 8 GB heap, which suits a developer
+    # machine but not a GitHub runner (about 7 GB of RAM in total): the build
+    # swaps, crawls and gets killed. A user-level gradle.properties overrides the
+    # project's, so the runner gets a smaller limit and the repo file is untouched.
+    - name: Limit Gradle memory for the runner
+      shell: bash
+      run: |
+        mkdir -p "$HOME/.gradle"
+        cat >> "$HOME/.gradle/gradle.properties" <<'EOF'
+        org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -XX:ReservedCodeCacheSize=256m
+        kotlin.daemon.jvmargs=-Xmx1g
+        org.gradle.workers.max=2
+        org.gradle.parallel=false
+        EOF
+        echo "runner memory:"; free -m | sed -n 1,2p
 
     - uses: subosito/flutter-action@v2
       with:

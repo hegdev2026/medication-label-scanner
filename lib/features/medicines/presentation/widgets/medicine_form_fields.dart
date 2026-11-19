@@ -18,6 +18,7 @@ class MedicineFormFields extends StatelessWidget {
     this.flagged = const {},
     this.warnings = const [],
     this.nameCandidates = const [],
+    this.sideBySide = false,
   });
 
   final GlobalKey<FormState> formKey;
@@ -26,10 +27,14 @@ class MedicineFormFields extends StatelessWidget {
   final List<ExtractionWarning> warnings;
   final List<String> nameCandidates;
 
+  /// Desktop with no photo beside the form: lay the two cards out as columns.
+  final bool sideBySide;
+
   @override
   Widget build(BuildContext context) {
     const gap = SizedBox(height: AppSpace.md);
-    final twoCol = context.isTabletUi || context.isDesktopUi;
+    // Inside side-by-side cards each card is narrow, so its fields stack.
+    final twoCol = !sideBySide && (context.isTabletUi || context.isDesktopUi);
     Widget pair(Widget a, Widget b) => twoCol
         ? Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -41,6 +46,94 @@ class MedicineFormFields extends StatelessWidget {
           )
         : Column(children: [a, gap, b]);
     final c = controllers;
+
+    final detailsCard = SectionCard(
+      title: 'form.sectionDetails'.tr(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppTextField(
+            controller: c.name,
+            icon: Icons.medication_outlined,
+            label: '${'form.name'.tr()} *',
+            needsReview: flagged.contains(MedicineField.name),
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'form.nameRequired'.tr()
+                : null,
+          ),
+          if (nameCandidates.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpace.sm),
+              child: Wrap(
+                spacing: AppSpace.sm,
+                children: [
+                  for (final n in nameCandidates)
+                    ActionChip(
+                      label: Text(n),
+                      onPressed: () => c.name.text = n,
+                    ),
+                ],
+              ),
+            ),
+          gap,
+          pair(
+            AppTextField(
+              controller: c.strength,
+              icon: Icons.science_outlined,
+              label: 'form.strength'.tr(),
+              needsReview: flagged.contains(MedicineField.strength),
+            ),
+            AppTextField(
+              controller: c.dosageForm,
+              icon: Icons.category_outlined,
+              label: 'form.dosageForm'.tr(),
+            ),
+          ),
+          FormHintChips(controllers: c),
+          gap,
+          AppTextField(
+            controller: c.generic,
+            icon: Icons.biotech_outlined,
+            label: 'form.generic'.tr(),
+          ),
+        ],
+      ),
+    );
+    final batchCard = SectionCard(
+      title: 'form.sectionBatch'.tr(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          pair(
+            AppTextField(
+              controller: c.batch,
+              icon: Icons.tag,
+              label: 'form.batch'.tr(),
+              needsReview: flagged.contains(MedicineField.batch),
+            ),
+            AppTextField(
+              controller: c.maker,
+              icon: Icons.factory_outlined,
+              label: 'form.manufacturer'.tr(),
+              needsReview: flagged.contains(MedicineField.manufacturer),
+            ),
+          ),
+          gap,
+          pair(
+            DateInputField(
+              controller: c.mfg,
+              label: 'form.mfgDate'.tr(),
+              needsReview: flagged.contains(MedicineField.mfgDate),
+            ),
+            DateInputField(
+              controller: c.expiry,
+              label: 'form.expiryDate'.tr(),
+              needsReview: flagged.contains(MedicineField.expiryDate),
+            ),
+          ),
+        ],
+      ),
+    );
 
     return Form(
       key: formKey,
@@ -63,94 +156,20 @@ class MedicineFormFields extends StatelessWidget {
             ),
             gap,
           ],
-          SectionCard(
-            title: 'form.sectionDetails'.tr(),
-            child: Column(
+          if (sideBySide)
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppTextField(
-                  controller: c.name,
-                  icon: Icons.medication_outlined,
-                  label: '${'form.name'.tr()} *',
-                  needsReview: flagged.contains(MedicineField.name),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'form.nameRequired'.tr()
-                      : null,
-                ),
-                if (nameCandidates.length > 1)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpace.sm),
-                    child: Wrap(
-                      spacing: AppSpace.sm,
-                      children: [
-                        for (final n in nameCandidates)
-                          ActionChip(
-                            label: Text(n),
-                            onPressed: () => c.name.text = n,
-                          ),
-                      ],
-                    ),
-                  ),
-                gap,
-                pair(
-                  AppTextField(
-                    controller: c.strength,
-                    icon: Icons.science_outlined,
-                    label: 'form.strength'.tr(),
-                    needsReview: flagged.contains(MedicineField.strength),
-                  ),
-                  AppTextField(
-                    controller: c.dosageForm,
-                    icon: Icons.category_outlined,
-                    label: 'form.dosageForm'.tr(),
-                  ),
-                ),
-                FormHintChips(controllers: c),
-                gap,
-                AppTextField(
-                  controller: c.generic,
-                  icon: Icons.biotech_outlined,
-                  label: 'form.generic'.tr(),
-                ),
+                Expanded(child: detailsCard),
+                const SizedBox(width: AppSpace.lg),
+                Expanded(child: batchCard),
               ],
-            ),
-          ),
-          gap,
-          SectionCard(
-            title: 'form.sectionBatch'.tr(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                pair(
-                  AppTextField(
-                    controller: c.batch,
-                    icon: Icons.tag,
-                    label: 'form.batch'.tr(),
-                    needsReview: flagged.contains(MedicineField.batch),
-                  ),
-                  AppTextField(
-                    controller: c.maker,
-                    icon: Icons.factory_outlined,
-                    label: 'form.manufacturer'.tr(),
-                    needsReview: flagged.contains(MedicineField.manufacturer),
-                  ),
-                ),
-                gap,
-                pair(
-                  DateInputField(
-                    controller: c.mfg,
-                    label: 'form.mfgDate'.tr(),
-                    needsReview: flagged.contains(MedicineField.mfgDate),
-                  ),
-                  DateInputField(
-                    controller: c.expiry,
-                    label: 'form.expiryDate'.tr(),
-                    needsReview: flagged.contains(MedicineField.expiryDate),
-                  ),
-                ),
-              ],
-            ),
-          ),
+            )
+          else ...[
+            detailsCard,
+            gap,
+            batchCard,
+          ],
         ],
       ),
     );

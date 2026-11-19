@@ -1,6 +1,6 @@
 {
-    "name": "medicine_lab_reader",
-    "short_name": "medicine_lab_reader",
+    "name": "MedScan",
+    "short_name": "MedScan",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

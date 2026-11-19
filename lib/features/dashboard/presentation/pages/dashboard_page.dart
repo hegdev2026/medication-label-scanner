@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:medicine_lab_reader/common/adaptive/form_factor.dart';
 import 'package:medicine_lab_reader/common/widgets/ads/ad_banner.dart';
 import 'package:medicine_lab_reader/common/widgets/brand_app_bar.dart';
 import 'package:medicine_lab_reader/common/widgets/content_wrapper.dart';
@@ -28,34 +29,65 @@ class DashboardPage extends StatelessWidget {
       body: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, s) {
           if (s.loading) return const DashboardSkeleton();
+          final scan = ScanHeroCard(onScan: () => context.push(AppRoutes.scan));
+          final actions = QuickActions(
+            onScan: () => context.push(AppRoutes.scan),
+            onImport: () => context.push(AppRoutes.scanGallery),
+            onLibrary: () => context.go(AppRoutes.inventory),
+          );
+          final recent = RecentScansSection(
+            items: s.recent,
+            total: s.total,
+            onViewAll: () => context.go(AppRoutes.inventory),
+          );
+          final info = s.infoDismissed
+              ? null
+              : KnowInsideCard(
+                  onDismiss: context.read<DashboardCubit>().dismissInfo,
+                );
+          const gapLg = SizedBox(height: AppSpace.lg);
+          const gapXl = SizedBox(height: AppSpace.xl);
+          final desktop = context.isDesktopUi;
           return ContentWrapper(
             scrollable: true,
-            maxWidth: 720,
+            maxWidth: desktop ? 1200 : 720,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GreetingHeader(now: DateTime.now()),
-                const SizedBox(height: AppSpace.lg),
-                ScanHeroCard(onScan: () => context.push(AppRoutes.scan)),
-                const SizedBox(height: AppSpace.xl),
-                QuickActions(
-                  onScan: () => context.push(AppRoutes.scan),
-                  onImport: () => context.push(AppRoutes.scanGallery),
-                  onLibrary: () => context.go(AppRoutes.inventory),
-                ),
-                const SizedBox(height: AppSpace.xl),
-                RecentScansSection(
-                  items: s.recent,
-                  total: s.total,
-                  onViewAll: () => context.go(AppRoutes.inventory),
-                ),
-                if (!s.infoDismissed) ...[
-                  const SizedBox(height: AppSpace.xl),
-                  KnowInsideCard(
-                    onDismiss: context.read<DashboardCubit>().dismissInfo,
-                  ),
+                gapLg,
+                if (desktop)
+                  // Two columns: act on the left, review on the right.
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [scan, gapXl, actions],
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.xl),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            recent,
+                            if (info != null) ...[gapXl, info],
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                else ...[
+                  scan,
+                  gapXl,
+                  actions,
+                  gapXl,
+                  recent,
+                  if (info != null) ...[gapXl, info],
                 ],
-                const SizedBox(height: AppSpace.lg),
+                gapLg,
                 const AdBanner(),
               ],
             ),

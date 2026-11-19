@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:medicine_lab_reader/common/adaptive/adaptive_view.dart';
+import 'package:medicine_lab_reader/common/adaptive/form_factor.dart';
 import 'package:medicine_lab_reader/common/widgets/app_button.dart';
 import 'package:medicine_lab_reader/common/widgets/confirm_dialog.dart';
 import 'package:medicine_lab_reader/common/widgets/content_wrapper.dart';
@@ -36,6 +37,9 @@ class _MedicineFormBodyState extends State<MedicineFormBody> {
   final _formKey = GlobalKey<FormState>();
   late final MedicineFormControllers _controllers;
 
+  static const _soloWidth = 720.0;
+
+  bool get _hasPanel => _imagePath != null || _rawText.isNotEmpty;
   bool get _fromScan => widget.draft != null;
   String? get _imagePath =>
       widget.existing?.imagePath ?? widget.draft?.imagePath;
@@ -91,7 +95,10 @@ class _MedicineFormBodyState extends State<MedicineFormBody> {
   @override
   Widget build(BuildContext context) {
     final details = widget.draft?.details;
+    // Desktop with nothing to show beside the form: two cards side by side.
+    final solo = !_hasPanel && context.isDesktopUi;
     final fields = MedicineFormFields(
+      sideBySide: solo,
       formKey: _formKey,
       controllers: _controllers,
       flagged: details?.flagged ?? const {},
@@ -116,14 +123,26 @@ class _MedicineFormBodyState extends State<MedicineFormBody> {
           fields,
         ],
       ),
-      tablet: (_) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(flex: 2, child: image),
-          const SizedBox(width: AppSpace.xl),
-          Expanded(flex: 3, child: fields),
-        ],
-      ),
+      tablet: (_) => _hasPanel
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 2, child: image),
+                const SizedBox(width: AppSpace.xl),
+                Expanded(flex: 3, child: fields),
+              ],
+            )
+          // Nothing to show beside the form (added by hand or from search):
+          // no empty column. Desktop gets two cards side by side; a tablet
+          // gets one centred column at the width of the Save dock.
+          : solo
+          ? fields
+          : Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: _soloWidth),
+                child: fields,
+              ),
+            ),
     );
     return BlocProvider(
       create: (_) => sl<FormHintsCubit>()..load(widget.seed),

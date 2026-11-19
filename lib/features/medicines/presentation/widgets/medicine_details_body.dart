@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:medicine_lab_reader/common/adaptive/adaptive_view.dart';
+import 'package:medicine_lab_reader/common/adaptive/form_factor.dart';
 import 'package:medicine_lab_reader/common/widgets/content_wrapper.dart';
 import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 import 'package:medicine_lab_reader/features/medicines/domain/entities/medicine.dart';
@@ -27,21 +28,27 @@ class MedicineDetailsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final m = medicine;
     final ocr = m.rawOcrText;
+    final hasPanel = m.imagePath != null || ocr.isNotEmpty;
     final hasGeneric = (m.genericName ?? '').isNotEmpty;
     final status = Align(
       alignment: Alignment.centerLeft,
       child: ReviewStatusPill(status: m.reviewStatus),
     );
-    final facts = [
+    // Your own data on one side, general information on the other.
+    final leftFacts = [
       _gap(MedicineIdentityCard(medicine: m)),
       _gap(ExpiryBatchCard(medicine: m)),
       if (hasGeneric) _gap(GenericNameCard(medicine: m)),
+    ];
+    final rightFacts = [
       _gap(MedicineInfoSection(query: MedicineInfoQuery.fromMedicine(m))),
       _gap(const LabelNotesCard()),
     ];
+    final facts = [...leftFacts, ...rightFacts];
+    final wide = context.isDesktopUi;
     return ContentWrapper(
       scrollable: true,
-      maxWidth: 960,
+      maxWidth: !hasPanel && wide ? 1200 : 960,
       child: AdaptiveView(
         mobile: (_) => Column(
           children: [
@@ -50,25 +57,49 @@ class MedicineDetailsBody extends StatelessWidget {
             if (ocr.isNotEmpty) _gap(OcrTextCard(text: ocr)),
           ],
         ),
-        tablet: (_) => Column(
-          children: [
-            _gap(status),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: MedicineImagePanel(
-                    imagePath: m.imagePath,
-                    rawText: ocr,
+        // Added by hand or from search: no photo or OCR text, so no left
+        // column. Desktop splits the cards into two side-by-side columns; a
+        // tablet gets one centred column at a readable width.
+        tablet: (_) => !hasPanel
+            ? Column(
+                children: [
+                  _gap(status),
+                  wide
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: Column(children: leftFacts)),
+                            const SizedBox(width: AppSpace.xl),
+                            Expanded(child: Column(children: rightFacts)),
+                          ],
+                        )
+                      : Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 720),
+                            child: Column(children: facts),
+                          ),
+                        ),
+                ],
+              )
+            : Column(
+                children: [
+                  _gap(status),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: MedicineImagePanel(
+                          imagePath: m.imagePath,
+                          rawText: ocr,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.xl),
+                      Expanded(flex: 3, child: Column(children: facts)),
+                    ],
                   ),
-                ),
-                const SizedBox(width: AppSpace.xl),
-                Expanded(flex: 3, child: Column(children: facts)),
-              ],
-            ),
-          ],
-        ),
+                ],
+              ),
       ),
     );
   }

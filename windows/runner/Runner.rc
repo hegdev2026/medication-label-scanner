@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "subshegde" "\0"
-            VALUE "FileDescription", "medicine_lab_reader" "\0"
+            VALUE "FileDescription", "MedScan" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "medicine_lab_reader" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 subshegde. All rights reserved." "\0"
             VALUE "OriginalFilename", "medicine_lab_reader.exe" "\0"
-            VALUE "ProductName", "medicine_lab_reader" "\0"
+            VALUE "ProductName", "MedScan" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

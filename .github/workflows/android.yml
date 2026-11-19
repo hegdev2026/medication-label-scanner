@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -84,7 +84,7 @@ jobs:
           mv build/app/outputs/flutter-apk/app-release.apk \
              "build/app/outputs/flutter-apk/medscan-staging-$BUILD_NUMBER.apk"
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: medscan-staging-apk-${{ github.run_number }}
           path: build/app/outputs/flutter-apk/medscan-staging-*.apk
@@ -93,7 +93,7 @@ jobs:
       # Needed to read a crash trace from this build:
       #   flutter symbolize -i trace.txt -d <dir>/app.android-arm64.symbols
       - name: Upload debug symbols
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: medscan-staging-symbols-${{ github.run_number }}
           path: build/symbols/apk
@@ -111,7 +111,7 @@ jobs:
     # a manual approval before anything reaches Play.
     environment: play-internal
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ./.github/actions/setup
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
@@ -154,7 +154,7 @@ jobs:
           RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
         run: bundle exec fastlane android internal
       - name: Upload debug symbols
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: medscan-aab-symbols-${{ github.run_number }}
           path: build/symbols/aab
@@ -173,7 +173,7 @@ jobs:
     permissions:
       contents: write   # to tag the release below
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.3"

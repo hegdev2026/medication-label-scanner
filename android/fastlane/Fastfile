@@ -1,0 +1,98 @@
+default_platform(:android)
+
+# The App Bundle `flutter build appbundle --release` produces. CI overrides this.
+AAB_PATH = ENV.fetch("AAB_PATH", "../build/app/outputs/bundle/release/app-release.aab")
+
+# supply matches release notes to a release by versionCode, so the file is named
+# after it. Absolute, because fastlane evaluates this file and a relative path gets
+# resolved twice from different working directories.
+METADATA_PATH = File.expand_path(File.join(__dir__, "metadata", "android")).freeze
+
+# The language folder must be one of the store listing languages configured in Play
+# Console (this app's default is English (United Kingdom)). Override with
+# PLAY_LANGUAGE if the default listing language changes.
+PLAY_LANGUAGE = ENV.fetch("PLAY_LANGUAGE", "en-GB")
+CHANGELOG_DIR = File.join(METADATA_PATH, PLAY_LANGUAGE, "changelogs").freeze
+
+# Writes RELEASE_NOTES into the layout supply expects. Returns false when there is
+# nothing to upload, so a local `fastlane internal` still works.
+def stage_changelog
+  notes = ENV["RELEASE_NOTES"].to_s.strip
+  return false if notes.empty?
+
+  version_code = ENV["BUILD_NUMBER"].to_s
+  if version_code.empty?
+    UI.user_error!("BUILD_NUMBER must be set alongside RELEASE_NOTES: supply names " \
+                   "the changelog file after the versionCode.")
+  end
+  # Play rejects release notes over 500 characters. Fail before using up a versionCode.
+  if notes.length > 500
+    UI.user_error!("RELEASE_NOTES is #{notes.length} characters; Play allows 500.")
+  end
+
+  FileUtils.mkdir_p(CHANGELOG_DIR)
+  File.write(File.join(CHANGELOG_DIR, "#{version_code}.txt"), notes)
+  UI.message("Release notes for versionCode #{version_code}: #{notes}")
+  true
+end
+
+# A brand-new app must ship its first release as "draft" until the store listing is
+# complete; after that "completed" is right. CI exposes this as RELEASE_STATUS.
+def release_status
+  ENV.fetch("RELEASE_STATUS", "completed")
+end
+
+platform :android do
+  desc "Verify the Play service account credentials without uploading anything"
+  lane :validate do
+    validate_play_store_json_key
+    UI.success("Play service account key is valid.")
+  end
+
+  desc "Upload the App Bundle to the internal testing track"
+  lane :internal do
+    UI.user_error!("AAB not found at #{AAB_PATH}") unless File.exist?(AAB_PATH)
+
+    has_changelog = stage_changelog
+    # supply checks this folder exists before it reads the skip flags.
+    FileUtils.mkdir_p(METADATA_PATH)
+
+    upload_to_play_store(
+      track: "internal",
+      aab: AAB_PATH,
+      release_status: release_status,
+      # Store listing copy lives in Play Console, not in git: never overwrite it.
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: !has_changelog,
+      metadata_path: METADATA_PATH,
+      validate_only: ENV["SUPPLY_VALIDATE_ONLY"] == "true",
+    )
+  end
+
+  # Promotes what testers already ran: the latest internal release goes to
+  # production without a rebuild, so production gets exactly the binary that was
+  # tested. Set ROLLOUT (for example 0.1) for a staged rollout to 10% of users.
+  desc "Promote the latest internal release to production"
+  lane :promote do
+    rollout = ENV["ROLLOUT"].to_s.strip
+    options = {}
+    options[:rollout] = rollout unless rollout.empty?
+
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "production",
+      release_status: rollout.empty? ? release_status : "inProgress",
+      skip_upload_aab: true,
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: true,
+      validate_only: ENV["SUPPLY_VALIDATE_ONLY"] == "true",
+      **options,
+    )
+    UI.success("Promoted to production.")
+  end
+end

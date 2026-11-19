@@ -1,0 +1,25 @@
+name: Set up Flutter
+description: Java 17, the pinned Flutter SDK and `flutter pub get`.
+
+inputs:
+  flutter-version:
+    description: Exact Flutter version. Keep it equal to the one used locally.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "17"
+
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ inputs.flutter-version }}
+        channel: stable
+        cache: true
+
+    - name: flutter pub get
+      shell: bash
+      run: flutter pub get

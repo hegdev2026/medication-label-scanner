@@ -1,0 +1,88 @@
+name: Prepare a signed Android build
+description: >
+  Writes env.json from a secret, decodes the upload keystore and writes
+  android/key.properties. Everything is checked rather than assumed, because
+  without key.properties Gradle silently signs with the debug key and Play
+  rejects the upload.
+
+inputs:
+  env-json:
+    description: The full contents of env.json (OCR key, contact, AdMob ids).
+    required: true
+  keystore-base64:
+    description: The upload keystore (.jks), base64 encoded.
+    required: true
+  store-password:
+    required: true
+  key-alias:
+    required: true
+  key-password:
+    required: true
+  test-ads:
+    description: >
+      "true" replaces every AdMob id with Google's sample ids, so testers can
+      tap ads on a build without producing invalid traffic on the real account.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Write env.json
+      shell: bash
+      env:
+        ENV_JSON: ${{ inputs.env-json }}
+        TEST_ADS: ${{ inputs.test-ads }}
+      run: |
+        set -euo pipefail
+        if [ -z "$ENV_JSON" ]; then
+          echo "::error::The ENV_JSON secret is empty. Paste the contents of env.json into it."
+          exit 1
+        fi
+        printf '%s' "$ENV_JSON" > env.json
+        python3 - <<'PY'
+        import json, os
+        d = json.load(open("env.json"))
+        if os.environ["TEST_ADS"] == "true":
+            # Google's published sample units (developers.google.com/admob/android/test-ads)
+            d.update({
+                "ADMOB_APP_ID": "ca-app-pub-3940256099942544~3347511713",
+                "ADMOB_BANNER_ID": "ca-app-pub-3940256099942544/6300978111",
+                "ADMOB_NATIVE_ID": "ca-app-pub-3940256099942544/2247696110",
+                "ADMOB_INTERSTITIAL_ID": "ca-app-pub-3940256099942544/1033173712",
+                "ADMOB_APP_OPEN_ID": "ca-app-pub-3940256099942544/9257395921",
+            })
+            json.dump(d, open("env.json", "w"))
+            print("env.json: AdMob ids replaced with Google's test ids")
+        missing = [k for k in ("ADMOB_APP_ID", "ADMOB_BANNER_ID") if not d.get(k)]
+        if missing:
+            raise SystemExit(f"env.json is missing {missing}")
+        # Gradle reads the AdMob *app* id from the environment, not from Dart.
+        with open(os.environ["GITHUB_ENV"], "a") as f:
+            f.write("ADMOB_APP_ID=" + d["ADMOB_APP_ID"] + "\n")
+        print("ok: env.json written and valid (" + ", ".join(sorted(d)) + ")")
+        PY
+
+    - name: Set up release signing
+      shell: bash
+      env:
+        KEYSTORE_B64: ${{ inputs.keystore-base64 }}
+        STORE_PASSWORD: ${{ inputs.store-password }}
+        KEY_ALIAS: ${{ inputs.key-alias }}
+        KEY_PASSWORD: ${{ inputs.key-password }}
+      run: |
+        set -euo pipefail
+        KS="$RUNNER_TEMP/upload-keystore.jks"
+        printf '%s' "$KEYSTORE_B64" | tr -d '\r\n ' | base64 -d > "$KS"
+        test -s "$KS" || { echo "::error::ANDROID_KEYSTORE_BASE64 did not decode to anything."; exit 1; }
+        # Proves the passwords open the keystore now, instead of a confusing
+        # Gradle failure ten minutes into the build.
+        keytool -list -keystore "$KS" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null \
+          || { echo "::error::The keystore did not open with the given password and alias."; exit 1; }
+        {
+          echo "storeFile=$KS"
+          echo "storePassword=$STORE_PASSWORD"
+          echo "keyAlias=$KEY_ALIAS"
+          echo "keyPassword=$KEY_PASSWORD"
+        } > android/key.properties
+        echo "ok: keystore opens, alias '$KEY_ALIAS' present, key.properties written"

@@ -1,0 +1,205 @@
+# Android pipeline.
+#
+#   pull request  -> quality gates only (analyze, format, test)
+#   push staging  -> signed APK, uploaded as a build artifact
+#   push qa       -> signed AAB -> Google Play internal testing
+#   push prod     -> promote the tested internal release to Google Play production
+#
+# Promotion path: main -> staging -> qa -> prod, by merging. Nothing else builds.
+name: Android
+
+on:
+  pull_request:
+    branches: [main, staging, qa, prod]
+  push:
+    branches: [staging, qa, prod]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run per branch at a time. Deploys are never cancelled half way: a cancelled
+# upload can leave Play with a versionCode that was used but never released.
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Keep equal to the Flutter used locally (`flutter --version`).
+  FLUTTER_VERSION: "3.41.6"
+  # versionCode sent to Play = VERSION_CODE_BASE + run number. Play rejects any
+  # versionCode <= one it has already seen, so raise this base, never lower it.
+  VERSION_CODE_BASE: "100"
+  # What testers and users see under "What's new". One fixed sentence on purpose:
+  # commit subjects are written for developers. Play allows at most 500 characters.
+  RELEASE_NOTES: "Bug fixes and enhancements."
+
+jobs:
+  # ---------------------------------------------------------------- quality
+  quality:
+    name: Analyze, format, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed lib test
+      - name: Analyze
+        run: flutter analyze
+      - name: Test
+        run: flutter test
+
+  # ---------------------------------------------------------------- staging
+  staging_apk:
+    name: Build staging APK
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/staging'
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - uses: ./.github/actions/prepare-build
+        with:
+          env-json: ${{ secrets.ENV_JSON }}
+          keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          store-password: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          key-alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          key-password: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # Staging goes to people's phones outside Play: Google's sample ads only.
+          test-ads: "true"
+      - name: Build APK (obfuscated)
+        run: |
+          set -euo pipefail
+          BUILD_NUMBER=$((VERSION_CODE_BASE + GITHUB_RUN_NUMBER))
+          flutter build apk --release \
+            --dart-define-from-file=env.json \
+            --obfuscate --split-debug-info=build/symbols/apk \
+            --build-number="$BUILD_NUMBER"
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             "build/app/outputs/flutter-apk/medscan-staging-$BUILD_NUMBER.apk"
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: medscan-staging-apk-${{ github.run_number }}
+          path: build/app/outputs/flutter-apk/medscan-staging-*.apk
+          retention-days: 30
+          if-no-files-found: error
+      # Needed to read a crash trace from this build:
+      #   flutter symbolize -i trace.txt -d <dir>/app.android-arm64.symbols
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: medscan-staging-symbols-${{ github.run_number }}
+          path: build/symbols/apk
+          retention-days: 90
+          if-no-files-found: error
+
+  # --------------------------------------------------------------------- qa
+  playstore_internal:
+    name: Build AAB and upload to Play internal testing
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/qa'
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Add required reviewers to this environment in the repo settings if you want
+    # a manual approval before anything reaches Play.
+    environment: play-internal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - uses: ./.github/actions/prepare-build
+        with:
+          env-json: ${{ secrets.ENV_JSON }}
+          keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          store-password: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          key-alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          key-password: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      - name: Build AAB (obfuscated)
+        run: |
+          set -euo pipefail
+          BUILD_NUMBER=$((VERSION_CODE_BASE + GITHUB_RUN_NUMBER))
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          flutter build appbundle --release \
+            --dart-define-from-file=env.json \
+            --obfuscate --split-debug-info=build/symbols/aab \
+            --build-number="$BUILD_NUMBER"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: android
+      - name: Play service account
+        env:
+          PLAY_KEY: ${{ secrets.PLAY_STORE_JSON_KEY_DATA }}
+        run: |
+          set -euo pipefail
+          test -n "$PLAY_KEY" || { echo "::error::PLAY_STORE_JSON_KEY_DATA is empty."; exit 1; }
+          printf '%s' "$PLAY_KEY" > android/fastlane/play-service-account.json
+          python3 -c "import json; json.load(open('android/fastlane/play-service-account.json'))"
+      - name: Upload to internal testing
+        working-directory: android
+        env:
+          SUPPLY_JSON_KEY: ${{ github.workspace }}/android/fastlane/play-service-account.json
+          AAB_PATH: ${{ github.workspace }}/build/app/outputs/bundle/release/app-release.aab
+          RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
+          # "draft" until the very first release has been made by hand; see docs/CI_CD.md.
+          RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
+        run: bundle exec fastlane android internal
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: medscan-aab-symbols-${{ github.run_number }}
+          path: build/symbols/aab
+          retention-days: 90
+          if-no-files-found: error
+
+  # ------------------------------------------------------------------- prod
+  playstore_production:
+    name: Promote internal release to Play production
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/prod'
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Add required reviewers to this environment: it is the last gate before users.
+    environment: play-production
+    permissions:
+      contents: write   # to tag the release below
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: android
+      - name: Play service account
+        env:
+          PLAY_KEY: ${{ secrets.PLAY_STORE_JSON_KEY_DATA }}
+        run: |
+          set -euo pipefail
+          test -n "$PLAY_KEY" || { echo "::error::PLAY_STORE_JSON_KEY_DATA is empty."; exit 1; }
+          printf '%s' "$PLAY_KEY" > android/fastlane/play-service-account.json
+          python3 -c "import json; json.load(open('android/fastlane/play-service-account.json'))"
+      - name: Promote to production
+        working-directory: android
+        env:
+          SUPPLY_JSON_KEY: ${{ github.workspace }}/android/fastlane/play-service-account.json
+          RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
+          # Optional staged rollout: set the repo variable PLAY_ROLLOUT to 0.1 for 10%.
+          ROLLOUT: ${{ vars.PLAY_ROLLOUT }}
+        run: bundle exec fastlane android promote
+      # Tag only after Play accepted the promotion, so a tag means "reached users".
+      - name: Tag the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="prod-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "Production $TAG" \
+            --notes "Promoted from Play internal testing to production. ${RELEASE_NOTES}"

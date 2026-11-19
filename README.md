@@ -191,21 +191,12 @@ The key ships inside the app, so use a free key you can replace.
 use to reach the app's owner (it goes in the request header, nothing is
 registered). Both values are optional.
 
-### CI (GitHub Actions)
+### CI/CD (GitHub Actions + fastlane)
 
-Store the values as repository secrets (`OCR_SPACE_KEY`, `APP_CONTACT`) and
-create `env.json` before building:
-
-```yaml
-- name: Create env.json
-  run: |
-    jq -n --arg k "$OCR_SPACE_KEY" --arg c "$APP_CONTACT" \
-      '{OCR_SPACE_KEY:$k, APP_CONTACT:$c}' > env.json
-  env:
-    OCR_SPACE_KEY: ${{ secrets.OCR_SPACE_KEY }}
-    APP_CONTACT: ${{ secrets.APP_CONTACT }}
-- run: make aab
-```
+Pushes to `staging` build an APK, `qa` uploads to Google Play internal testing,
+and `prod` promotes that release to production. Everything is Android only and
+obfuscated. Setup, secrets and the release flow are in
+[docs/CI_CD.md](docs/CI_CD.md).
 
 ## Ads (Google AdMob)
 

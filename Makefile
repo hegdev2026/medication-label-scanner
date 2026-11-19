@@ -1,3 +1,10 @@
+# Release builds are obfuscated; the symbols (needed to read crash traces) land in
+# build/symbols/<apk|aab>. `make aab OBFUSCATE=false` for a one-off plain build.
+OBFUSCATE ?= true
+BUILD_NUMBER ?=
+obf = $(if $(filter true,$(OBFUSCATE)),--obfuscate --split-debug-info=build/symbols/$(1),)
+build_number = $(if $(BUILD_NUMBER),--build-number=$(BUILD_NUMBER),)
+
 .PHONY: gen watch test analyze env run apk aab
 
 # Build-time values (OCR key, contact, AdMob ids) live in env.json, which is not
@@ -29,7 +36,7 @@ run: env
 	ADMOB_APP_ID="$(ADMOB_APP_ID_VALUE)" flutter run $(DEFINES)
 
 apk: env
-	ADMOB_APP_ID="$(ADMOB_APP_ID_VALUE)" flutter build apk --release $(DEFINES)
+	ADMOB_APP_ID="$(ADMOB_APP_ID_VALUE)" flutter build apk --release $(DEFINES) $(call obf,apk) $(build_number)
 
 aab: env
-	ADMOB_APP_ID="$(ADMOB_APP_ID_VALUE)" flutter build appbundle --release $(DEFINES)
+	ADMOB_APP_ID="$(ADMOB_APP_ID_VALUE)" flutter build appbundle --release $(DEFINES) $(call obf,aab) $(build_number)

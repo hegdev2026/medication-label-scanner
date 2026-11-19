@@ -16,6 +16,25 @@ runs:
       with:
         distribution: temurin
         java-version: "17"
+        # Keeps downloaded Gradle dependencies between runs; the first build is
+        # slow, later ones are much faster.
+        cache: gradle
+
+    # android/gradle.properties asks for an 8 GB heap, which suits a developer
+    # machine but not a GitHub runner (about 7 GB of RAM in total): the build
+    # swaps, crawls and gets killed. A user-level gradle.properties overrides the
+    # project's, so the runner gets a smaller limit and the repo file is untouched.
+    - name: Limit Gradle memory for the runner
+      shell: bash
+      run: |
+        mkdir -p "$HOME/.gradle"
+        cat >> "$HOME/.gradle/gradle.properties" <<'EOF'
+        org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=768m -XX:ReservedCodeCacheSize=256m
+        kotlin.daemon.jvmargs=-Xmx1g
+        org.gradle.workers.max=2
+        org.gradle.parallel=false
+        EOF
+        echo "runner memory:"; free -m | sed -n 1,2p
 
     - uses: subosito/flutter-action@v2
       with:

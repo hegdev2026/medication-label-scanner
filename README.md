@@ -157,7 +157,9 @@ layouts, and that every legal-text key exists in both languages.
 Photos, the text read from them and saved details stay on the device. The one
 network request the app may make is downloading its typeface from Google Fonts
 on first run, which carries no medicine data; bundling the font would remove it.
-See the in-app Privacy Policy (Settings → Legal) for the full text. The legal
+See the in-app Privacy Policy (Settings → Legal) for the full text, or read it
+online: [MedScan Privacy Policy](https://hegdev2026.github.io/medscan-privacy/).
+The legal
 text is a sensible default and should be reviewed by a lawyer before release, and
 the Hindi translations should be checked by a native speaker.
 

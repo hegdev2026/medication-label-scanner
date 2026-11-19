@@ -7,6 +7,7 @@ import 'package:medicine_lab_reader/common/widgets/safety_notice.dart';
 import 'package:medicine_lab_reader/common/widgets/section_card.dart';
 import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 import 'package:medicine_lab_reader/features/settings/presentation/widgets/ads_card.dart';
+import 'package:medicine_lab_reader/features/settings/presentation/widgets/app_version_label.dart';
 import 'package:medicine_lab_reader/features/settings/presentation/widgets/cloud_scan_card.dart';
 import 'package:medicine_lab_reader/features/settings/presentation/widgets/language_selector.dart';
 import 'package:medicine_lab_reader/features/settings/presentation/widgets/legal_links_card.dart';
@@ -36,6 +37,7 @@ class SettingsPage extends StatelessWidget {
           const LegalLinksCard(),
           const SizedBox(height: AppSpace.md),
           const SafetyNotice(),
+          const AppVersionLabel(),
         ],
       ),
     ),

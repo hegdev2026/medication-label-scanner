@@ -60,6 +60,7 @@ dependencies:
   connectivity_plus: ^7.3.2
   url_launcher: ^6.3.3
   google_mobile_ads: ^9.2.0
+  package_info_plus: ^10.2.2
 
 dev_dependencies:
   flutter_test:

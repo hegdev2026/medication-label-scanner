@@ -140,6 +140,12 @@ import 'package:medicine_lab_reader/features/search/presentation/bloc/search_cub
     as _i512;
 import 'package:medicine_lab_reader/features/search/presentation/bloc/suggestions_cubit.dart'
     as _i371;
+import 'package:medicine_lab_reader/features/settings/data/sources/package_info_app_version_source.dart'
+    as _i725;
+import 'package:medicine_lab_reader/features/settings/domain/services/app_version_source.dart'
+    as _i1009;
+import 'package:medicine_lab_reader/features/settings/presentation/bloc/app_version_cubit.dart'
+    as _i510;
 import 'package:medicine_lab_reader/features/settings/presentation/bloc/cloud_scan_cubit.dart'
     as _i554;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
@@ -172,6 +178,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i809.MedicineOcrService>(() => ocrModule.ocr());
     gh.lazySingleton<_i1060.MedicineParser>(() => _i1060.MedicineParser());
     gh.factory<bool>(() => registerModule.isMobile, instanceName: 'isMobile');
+    gh.lazySingleton<_i1009.AppVersionSource>(
+      () => _i725.PackageInfoAppVersionSource(),
+    );
     gh.lazySingleton<_i136.ImageStorage>(() => _i745.ImageStorageService());
     gh.lazySingleton<_i17.NetworkInfo>(() => _i17.NetworkInfoImpl());
     gh.lazySingleton<_i329.AdService>(() => _i581.AdServiceImpl());
@@ -189,6 +198,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i633.CloudScanSettings>(
       () => _i630.CloudScanSettingsImpl(gh<_i460.SharedPreferences>()),
+    );
+    gh.factory<_i510.AppVersionCubit>(
+      () => _i510.AppVersionCubit(gh<_i1009.AppVersionSource>()),
     );
     gh.lazySingleton<_i49.DioClient>(
       () => _i49.DioClient(gh<_i361.Dio>(), gh<_i17.NetworkInfo>()),

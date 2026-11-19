@@ -173,6 +173,7 @@
     "disclaimer": "Printed expiry dates are shown for reference only. A medicine that has not passed its date is not guaranteed to be safe."
   },
   "settings": {
+    "version": "Version {}",
     "title": "Settings",
     "appearance": "Appearance",
     "system": "System",

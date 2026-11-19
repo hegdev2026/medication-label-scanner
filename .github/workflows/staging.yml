@@ -1,0 +1,70 @@
+# Push or merge to `staging`: checks, then a signed, obfuscated APK to download.
+# Nothing here touches Google Play.
+name: Staging APK
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+env:
+  # versionCode = VERSION_CODE_BASE + run number. Only matters if you ever install
+  # staging APKs over each other; Play never sees this build.
+  VERSION_CODE_BASE: "100"
+
+jobs:
+  checks:
+    name: Checks
+    uses: ./.github/workflows/checks.yml
+
+  apk:
+    name: Build staging APK
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/prepare-build
+        with:
+          env-json: ${{ secrets.ENV_JSON }}
+          keystore-base64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          store-password: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          key-alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          key-password: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # Staging goes to phones outside Play: Google's sample ads only, so
+          # testers can tap ads without risking the real AdMob account.
+          test-ads: "true"
+      - name: Build APK (obfuscated)
+        run: |
+          set -euo pipefail
+          BUILD_NUMBER=$((VERSION_CODE_BASE + GITHUB_RUN_NUMBER))
+          flutter build apk --release \
+            --dart-define-from-file=env.json \
+            --obfuscate --split-debug-info=build/symbols/apk \
+            --build-number="$BUILD_NUMBER"
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             "build/app/outputs/flutter-apk/medscan-staging-$BUILD_NUMBER.apk"
+      - name: Upload APK
+        uses: actions/upload-artifact@v5
+        with:
+          name: medscan-staging-apk-${{ github.run_number }}
+          path: build/app/outputs/flutter-apk/medscan-staging-*.apk
+          retention-days: 30
+          if-no-files-found: error
+      # Needed to read a crash trace from this build:
+      #   flutter symbolize -i trace.txt -d <dir>/app.android-arm64.symbols
+      - name: Upload debug symbols
+        uses: actions/upload-artifact@v5
+        with:
+          name: medscan-staging-symbols-${{ github.run_number }}
+          path: build/symbols/apk
+          retention-days: 90
+          if-no-files-found: error

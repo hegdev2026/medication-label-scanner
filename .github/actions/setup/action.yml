@@ -3,8 +3,11 @@ description: Java 17, the pinned Flutter SDK and `flutter pub get`.
 
 inputs:
   flutter-version:
-    description: Exact Flutter version. Keep it equal to the one used locally.
-    required: true
+    description: >
+      Exact Flutter version. The one place it is set for every workflow; keep it
+      equal to `flutter --version` on your machine.
+    required: false
+    default: "3.41.6"
 
 runs:
   using: composite

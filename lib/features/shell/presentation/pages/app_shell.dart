@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:medicine_lab_reader/common/adaptive/adaptive_view.dart';
+import 'package:medicine_lab_reader/common/widgets/hide_when_keyboard.dart';
 import 'package:medicine_lab_reader/core/router/app_routes.dart';
 import 'package:medicine_lab_reader/features/shell/presentation/widgets/mobile_bottom_nav.dart';
 import 'package:medicine_lab_reader/features/shell/presentation/widgets/nav_scan_button.dart';
@@ -37,11 +38,14 @@ class AppShell extends StatelessWidget {
     mobile: (context) => Scaffold(
       body: shell,
       // Sits above the floating bar, at the end of the screen.
-      floatingActionButton: NavScanButton(onTap: () => _scan(context)),
+      // The bar and the scan button step aside while the keyboard is open, so
+      // they do not ride up above it and squeeze the screen.
+      floatingActionButton: HideWhenKeyboard(
+        child: NavScanButton(onTap: () => _scan(context)),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: MobileBottomNav(
-        index: shell.currentIndex,
-        onSelected: _go,
+      bottomNavigationBar: HideWhenKeyboard(
+        child: MobileBottomNav(index: shell.currentIndex, onSelected: _go),
       ),
     ),
     tablet: (context) => _withRail(context, extended: false),

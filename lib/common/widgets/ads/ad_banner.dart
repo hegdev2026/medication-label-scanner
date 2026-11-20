@@ -68,10 +68,12 @@ class _BannerViewState extends State<_BannerView> {
     valueListenable: _ad,
     builder: (_, ad, _) {
       if (ad == null) return const SizedBox.shrink();
-      return SizedBox(
-        width: ad.size.width.toDouble(),
-        height: ad.size.height.toDouble(),
-        child: AdWidget(ad: ad),
+      return AdFrame(
+        child: SizedBox(
+          width: ad.size.width.toDouble(),
+          height: ad.size.height.toDouble(),
+          child: AdWidget(ad: ad),
+        ),
       );
     },
   );

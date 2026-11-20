@@ -27,11 +27,25 @@ import 'package:medicine_lab_reader/core/network/dio/dio_client.dart' as _i49;
 import 'package:medicine_lab_reader/core/network/dio/dio_module.dart' as _i526;
 import 'package:medicine_lab_reader/core/network/network_info.dart' as _i17;
 import 'package:medicine_lab_reader/core/router/app_router.dart' as _i781;
+import 'package:medicine_lab_reader/core/services/app_shortcuts_service.dart'
+    as _i777;
 import 'package:medicine_lab_reader/core/services/image_storage_service.dart'
     as _i745;
 import 'package:medicine_lab_reader/core/services/notification_service.dart'
     as _i731;
 import 'package:medicine_lab_reader/core/theme/theme_cubit.dart' as _i546;
+import 'package:medicine_lab_reader/features/app_update/data/sources/play_app_update_service.dart'
+    as _i231;
+import 'package:medicine_lab_reader/features/app_update/domain/services/app_update_service.dart'
+    as _i686;
+import 'package:medicine_lab_reader/features/app_update/domain/usecase/check_app_update_usecase.dart'
+    as _i439;
+import 'package:medicine_lab_reader/features/app_update/domain/usecase/install_app_update_usecase.dart'
+    as _i193;
+import 'package:medicine_lab_reader/features/app_update/domain/usecase/start_app_update_usecase.dart'
+    as _i170;
+import 'package:medicine_lab_reader/features/app_update/presentation/bloc/app_update_cubit.dart'
+    as _i412;
 import 'package:medicine_lab_reader/features/dashboard/presentation/bloc/dashboard_cubit.dart'
     as _i418;
 import 'package:medicine_lab_reader/features/expiry/presentation/bloc/expiry_tracker_cubit.dart'
@@ -90,6 +104,8 @@ import 'package:medicine_lab_reader/features/medicines/domain/usecase/get_medici
     as _i358;
 import 'package:medicine_lab_reader/features/medicines/domain/usecase/get_medicine_usecase.dart'
     as _i942;
+import 'package:medicine_lab_reader/features/medicines/domain/usecase/request_notification_permission_usecase.dart'
+    as _i779;
 import 'package:medicine_lab_reader/features/medicines/domain/usecase/reschedule_reminders_usecase.dart'
     as _i413;
 import 'package:medicine_lab_reader/features/medicines/domain/usecase/save_medicine_usecase.dart'
@@ -148,6 +164,8 @@ import 'package:medicine_lab_reader/features/settings/presentation/bloc/app_vers
     as _i510;
 import 'package:medicine_lab_reader/features/settings/presentation/bloc/cloud_scan_cubit.dart'
     as _i554;
+import 'package:medicine_lab_reader/features/settings/presentation/bloc/language_cubit.dart'
+    as _i382;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -165,6 +183,7 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
     );
     gh.factory<_i512.SearchCubit>(() => _i512.SearchCubit());
+    gh.factory<_i382.LanguageCubit>(() => _i382.LanguageCubit());
     gh.lazySingleton<_i225.AppOpenGate>(() => _i225.AppOpenGate());
     gh.lazySingleton<_i818.AppDatabase>(() => registerModule.database);
     gh.lazySingleton<_i974.Logger>(() => registerModule.logger);
@@ -177,7 +196,25 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i781.AppRouter>(() => _i781.AppRouter());
     gh.lazySingleton<_i809.MedicineOcrService>(() => ocrModule.ocr());
     gh.lazySingleton<_i1060.MedicineParser>(() => _i1060.MedicineParser());
+    gh.lazySingleton<_i777.AppShortcutsService>(
+      () => _i777.AppShortcutsService(
+        gh<_i781.AppRouter>(),
+        gh<_i225.AppOpenGate>(),
+      ),
+    );
     gh.factory<bool>(() => registerModule.isMobile, instanceName: 'isMobile');
+    gh.lazySingleton<_i686.AppUpdateService>(
+      () => _i231.PlayAppUpdateService(),
+    );
+    gh.lazySingleton<_i439.CheckAppUpdateUsecase>(
+      () => _i439.CheckAppUpdateUsecase(gh<_i686.AppUpdateService>()),
+    );
+    gh.lazySingleton<_i193.InstallAppUpdateUsecase>(
+      () => _i193.InstallAppUpdateUsecase(gh<_i686.AppUpdateService>()),
+    );
+    gh.lazySingleton<_i170.StartAppUpdateUsecase>(
+      () => _i170.StartAppUpdateUsecase(gh<_i686.AppUpdateService>()),
+    );
     gh.lazySingleton<_i1009.AppVersionSource>(
       () => _i725.PackageInfoAppVersionSource(),
     );
@@ -199,21 +236,30 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i633.CloudScanSettings>(
       () => _i630.CloudScanSettingsImpl(gh<_i460.SharedPreferences>()),
     );
+    gh.lazySingleton<_i367.ImageSourceService>(
+      () => _i617.ImageSourceServiceImpl(
+        gh<_i183.ImagePicker>(),
+        gh<bool>(instanceName: 'isMobile'),
+        gh<_i225.AppOpenGate>(),
+        gh<_i633.CloudScanSettings>(),
+      ),
+    );
     gh.factory<_i510.AppVersionCubit>(
       () => _i510.AppVersionCubit(gh<_i1009.AppVersionSource>()),
+    );
+    gh.lazySingleton<_i412.AppUpdateCubit>(
+      () => _i412.AppUpdateCubit(
+        gh<_i686.AppUpdateService>(),
+        gh<_i439.CheckAppUpdateUsecase>(),
+        gh<_i170.StartAppUpdateUsecase>(),
+        gh<_i193.InstallAppUpdateUsecase>(),
+      ),
     );
     gh.lazySingleton<_i49.DioClient>(
       () => _i49.DioClient(gh<_i361.Dio>(), gh<_i17.NetworkInfo>()),
     );
     gh.lazySingleton<_i1067.MedicineLocalDataSource>(
       () => _i1067.MedicineLocalDataSource(gh<_i818.AppDatabase>()),
-    );
-    gh.lazySingleton<_i367.ImageSourceService>(
-      () => _i617.ImageSourceServiceImpl(
-        gh<_i183.ImagePicker>(),
-        gh<bool>(instanceName: 'isMobile'),
-        gh<_i225.AppOpenGate>(),
-      ),
     );
     gh.lazySingleton<_i232.ReminderScheduler>(
       () => _i731.NotificationService(
@@ -259,6 +305,11 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i4.MedicineRepository>(
       () => _i152.MedicineRepositoryImpl(gh<_i1067.MedicineLocalDataSource>()),
+    );
+    gh.lazySingleton<_i779.RequestNotificationPermissionUsecase>(
+      () => _i779.RequestNotificationPermissionUsecase(
+        gh<_i232.ReminderScheduler>(),
+      ),
     );
     gh.lazySingleton<_i767.FindDuplicatesUsecase>(
       () => _i767.FindDuplicatesUsecase(gh<_i4.MedicineRepository>()),

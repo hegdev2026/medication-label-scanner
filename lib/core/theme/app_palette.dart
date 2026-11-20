@@ -76,6 +76,53 @@ class AppPalette {
   final Color shimmerBase;
   final Color shimmerHighlight;
 
+  /// A palette part-way from [a] to [b], used to fade between light and dark.
+  static AppPalette lerp(AppPalette a, AppPalette b, double t) {
+    if (t <= 0) return a;
+    if (t >= 1) return b;
+    return AppPalette(
+      isDark: t < 0.5 ? a.isDark : b.isDark,
+      background: Color.lerp(a.background, b.background, t) ?? b.background,
+      card: Color.lerp(a.card, b.card, t) ?? b.card,
+      inset: Color.lerp(a.inset, b.inset, t) ?? b.inset,
+      border: Color.lerp(a.border, b.border, t) ?? b.border,
+      textPrimary: Color.lerp(a.textPrimary, b.textPrimary, t) ?? b.textPrimary,
+      textSecondary:
+          Color.lerp(a.textSecondary, b.textSecondary, t) ?? b.textSecondary,
+      textMuted: Color.lerp(a.textMuted, b.textMuted, t) ?? b.textMuted,
+      primary: Color.lerp(a.primary, b.primary, t) ?? b.primary,
+      primaryContainer:
+          Color.lerp(a.primaryContainer, b.primaryContainer, t) ??
+          b.primaryContainer,
+      onPrimaryContainer:
+          Color.lerp(a.onPrimaryContainer, b.onPrimaryContainer, t) ??
+          b.onPrimaryContainer,
+      success: Color.lerp(a.success, b.success, t) ?? b.success,
+      warning: Color.lerp(a.warning, b.warning, t) ?? b.warning,
+      danger: Color.lerp(a.danger, b.danger, t) ?? b.danger,
+      noticeBg: Color.lerp(a.noticeBg, b.noticeBg, t) ?? b.noticeBg,
+      noticeText: Color.lerp(a.noticeText, b.noticeText, t) ?? b.noticeText,
+      shadow: Color.lerp(a.shadow, b.shadow, t) ?? b.shadow,
+      accent: Color.lerp(a.accent, b.accent, t) ?? b.accent,
+      onAccentFill:
+          Color.lerp(a.onAccentFill, b.onAccentFill, t) ?? b.onAccentFill,
+      accentText: Color.lerp(a.accentText, b.accentText, t) ?? b.accentText,
+      warningBg: Color.lerp(a.warningBg, b.warningBg, t) ?? b.warningBg,
+      warningContainer:
+          Color.lerp(a.warningContainer, b.warningContainer, t) ??
+          b.warningContainer,
+      warningText: Color.lerp(a.warningText, b.warningText, t) ?? b.warningText,
+      scanSurface: Color.lerp(a.scanSurface, b.scanSurface, t) ?? b.scanSurface,
+      scanControl: Color.lerp(a.scanControl, b.scanControl, t) ?? b.scanControl,
+      hero: Color.lerp(a.hero, b.hero, t) ?? b.hero,
+      heroMuted: Color.lerp(a.heroMuted, b.heroMuted, t) ?? b.heroMuted,
+      shimmerBase: Color.lerp(a.shimmerBase, b.shimmerBase, t) ?? b.shimmerBase,
+      shimmerHighlight:
+          Color.lerp(a.shimmerHighlight, b.shimmerHighlight, t) ??
+          b.shimmerHighlight,
+    );
+  }
+
   /// Theme-invariant.
   static const Color onAccent = Color(0xFFFFFFFF);
 

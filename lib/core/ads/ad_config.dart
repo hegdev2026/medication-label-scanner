@@ -13,6 +13,17 @@ abstract final class AdConfig {
   static const _interstitial = String.fromEnvironment('ADMOB_INTERSTITIAL_ID');
   static const _appOpen = String.fromEnvironment('ADMOB_APP_OPEN_ID');
 
+  static const _testDevices = String.fromEnvironment('ADMOB_TEST_DEVICE_IDS');
+
+  /// Devices that get Google test ads even in a release build (comma separated
+  /// ids in `ADMOB_TEST_DEVICE_IDS`), so testers on Play's internal track can
+  /// tap ads without risking the real account. The ids are in logcat: "Use
+  /// RequestConfiguration.Builder().setTestDeviceIds(...)".
+  static List<String> get testDeviceIds => [
+    for (final id in _testDevices.split(','))
+      if (id.trim().isNotEmpty) id.trim(),
+  ];
+
   /// The Google Mobile Ads plugin runs on Android and iOS only.
   static bool get supported =>
       !kIsWeb &&

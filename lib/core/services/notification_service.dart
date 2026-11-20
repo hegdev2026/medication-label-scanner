@@ -60,6 +60,9 @@ class NotificationService implements ReminderScheduler {
     return _ready;
   }
 
+  @override
+  Future<bool> requestPermission() => _init();
+
   /// Stable ids: medicineId * 10 + offset index.
   int _id(int medicineId, int index) => medicineId * 10 + index;
 

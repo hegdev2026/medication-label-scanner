@@ -8,10 +8,14 @@ import 'package:medicine_lab_reader/core/app.dart';
 import 'package:medicine_lab_reader/core/base/base_usecase.dart';
 import 'package:medicine_lab_reader/core/constants/app_assets.dart';
 import 'package:medicine_lab_reader/core/di/sl.dart';
+import 'package:medicine_lab_reader/core/services/orientation_policy.dart';
+import 'package:medicine_lab_reader/features/app_update/presentation/bloc/app_update_cubit.dart';
+import 'package:medicine_lab_reader/features/medicines/domain/usecase/request_notification_permission_usecase.dart';
 import 'package:medicine_lab_reader/features/medicines/domain/usecase/reschedule_reminders_usecase.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await OrientationPolicy.apply();
   await EasyLocalization.ensureInitialized();
   await configureDependencies();
   runApp(
@@ -22,8 +26,17 @@ Future<void> main() async {
       child: const MedScanApp(),
     ),
   );
-  sl<RescheduleRemindersUsecase>()(const NoParams());
-  unawaited(
-    sl<AdsCubit>().start().then((_) => sl<AdsCubit>().observeLifecycle()),
-  );
+  unawaited(_startServices());
+}
+
+/// Start-up work that must not block the first frame, in order: the
+/// notification permission first, then reminders, then ad consent and the ad
+/// SDK, then the update check (so its prompt never sits under a consent form).
+Future<void> _startServices() async {
+  await sl<RequestNotificationPermissionUsecase>()(const NoParams());
+  await sl<RescheduleRemindersUsecase>()(const NoParams());
+  final ads = sl<AdsCubit>();
+  await ads.start();
+  ads.observeLifecycle();
+  await sl<AppUpdateCubit>().check();
 }

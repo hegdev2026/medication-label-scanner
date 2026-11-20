@@ -50,4 +50,16 @@ MRP Rs. 120.00
   test('price is not treated as strength', () {
     expect(parser.parse('MRP Rs 50 G').strength, isNull);
   });
+
+  test('common misreads of the expiry label still find the date', () {
+    expect(parser.parse('Test Drug 10 mg EXR 04/2027').expiryDate?.year, 2027);
+    expect(
+      parser.parse('Test Drug 10 mg FXP. DATE: 04/2027').expiryDate?.year,
+      2027,
+    );
+    expect(
+      parser.parse('Test Drug 10 mg Best before 04/2027').expiryDate?.year,
+      2027,
+    );
+  });
 }

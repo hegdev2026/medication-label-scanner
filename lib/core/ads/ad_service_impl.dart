@@ -29,7 +29,10 @@ class AdServiceImpl implements AdService {
       if (!await ConsentInformation.instance.canRequestAds()) return false;
       await MobileAds.instance.updateRequestConfiguration(
         // Medicine app: keep ad content mild.
-        RequestConfiguration(maxAdContentRating: MaxAdContentRating.pg),
+        RequestConfiguration(
+          maxAdContentRating: MaxAdContentRating.pg,
+          testDeviceIds: AdConfig.testDeviceIds,
+        ),
       );
       await MobileAds.instance.initialize();
       _started = true;

@@ -24,7 +24,7 @@ void main() {
       child: ThemeScope(
         palette: value.$1,
         locale: value.$2,
-        child: const _Leaf(),
+        builder: (_, _) => const _Leaf(),
       ),
     ),
   );
@@ -36,8 +36,27 @@ void main() {
     await t.pumpWidget(host(v));
     expect(find.text('light'), findsOneWidget);
     v.value = (AppPalette.dark, const Locale('en'));
-    await t.pump(); // a single frame, no further interaction
+    await t.pump(); // the fade starts on this frame
+    await t.pump(const Duration(milliseconds: 400)); // and has finished
     expect(find.text('dark'), findsOneWidget);
+    expect(AppColors.palette, same(AppPalette.dark));
+    AppColors.palette = AppPalette.light;
+  });
+
+  testWidgets('const widgets follow the colours while they fade', (t) async {
+    final v = ValueNotifier((AppPalette.light, const Locale('en')));
+    await t.pumpWidget(host(v));
+    v.value = (AppPalette.dark, const Locale('en'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 160)); // half way
+    final mid = t.widget<ColoredBox>(find.byType(ColoredBox)).color;
+    expect(mid, isNot(AppPalette.light.card));
+    expect(mid, isNot(AppPalette.dark.card));
+    await t.pump(const Duration(milliseconds: 400));
+    expect(
+      t.widget<ColoredBox>(find.byType(ColoredBox)).color,
+      AppPalette.dark.card,
+    );
     AppColors.palette = AppPalette.light;
   });
 
@@ -54,7 +73,7 @@ void main() {
           child: ThemeScope(
             palette: value.$1,
             locale: value.$2,
-            child: Builder(
+            builder: (_, _) => Builder(
               builder: (_) {
                 builds++;
                 return const SizedBox();

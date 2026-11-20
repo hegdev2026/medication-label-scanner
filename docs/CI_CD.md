@@ -354,7 +354,8 @@ to 10% first, set `PLAY_ROLLOUT` to `0.1` before the `prod` push.
 | `Version code ... has already been used` | Play has seen that versionCode. Raise `VERSION_CODE_BASE` in `qa.yml`. |
 | Release notes error about a language | The release notes are written to `en-GB`. Match it to your store listing's default language by changing `PLAY_LANGUAGE` in the Fastfile. |
 | The `prod` run says there is nothing to promote | No release exists on the internal track. Do a `qa` push first. |
-| `prod` is refused by Play | Production access has not been granted yet. See section 4.2. |
+| `Google Api Error: Invalid request - Precondition check failed` on `prod` | Play refuses the promotion. Usual causes: production access not granted yet (section 4.2); the app is still a draft, so set the variable `PLAY_RELEASE_STATUS` to `draft`; the internal release is a draft nobody rolled out in Play Console; or Play Console shows unfinished app content tasks. The run's log prints the internal and production versionCodes and these hints. |
+| `The internal track has no release to promote` | Nothing has been uploaded to internal testing yet. Push to `qa` first. |
 | The app is signed with the debug key | `android/key.properties` is missing in the build. Check the secrets and the **Set up release signing** step. |
 | The `prod` run waits forever | It is waiting for your approval. Open the run in **Actions** and click **Review deployments**. |
 

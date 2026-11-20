@@ -77,22 +77,50 @@ platform :android do
   desc "Promote the latest internal release to production"
   lane :promote do
     rollout = ENV["ROLLOUT"].to_s.strip
+
+    # Fail early, and say why, if there is nothing on the internal track.
+    internal = google_play_track_version_codes(track: "internal")
+    if internal.nil? || internal.empty?
+      UI.user_error!("The internal track has no release to promote. Push to the qa " \
+                     "branch first so a build is uploaded to internal testing.")
+    end
+    UI.message("Internal track versionCodes: #{internal.join(', ')}")
+    UI.message("Production track versionCodes: " \
+               "#{(google_play_track_version_codes(track: 'production') || []).join(', ')}")
+
+    # A promotion uses track_promote_release_status, not release_status. It must
+    # match what Play allows for the app right now: "completed" for a published app,
+    # "draft" for an app that has not been published yet, "inProgress" with ROLLOUT.
+    status = rollout.empty? ? release_status : "inProgress"
     options = {}
     options[:rollout] = rollout unless rollout.empty?
 
-    upload_to_play_store(
-      track: "internal",
-      track_promote_to: "production",
-      release_status: rollout.empty? ? release_status : "inProgress",
-      skip_upload_aab: true,
-      skip_upload_apk: true,
-      skip_upload_metadata: true,
-      skip_upload_images: true,
-      skip_upload_screenshots: true,
-      skip_upload_changelogs: true,
-      validate_only: ENV["SUPPLY_VALIDATE_ONLY"] == "true",
-      **options,
-    )
-    UI.success("Promoted to production.")
+    begin
+      upload_to_play_store(
+        track: "internal",
+        track_promote_to: "production",
+        track_promote_release_status: status,
+        skip_upload_aab: true,
+        skip_upload_apk: true,
+        skip_upload_metadata: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        skip_upload_changelogs: true,
+        validate_only: ENV["SUPPLY_VALIDATE_ONLY"] == "true",
+        **options,
+      )
+    rescue FastlaneCore::Interface::FastlaneError => e
+      if e.message.include?("Precondition")
+        UI.important("Google Play refused the promotion (\"Precondition check failed\"). " \
+                     "Usual causes: (1) production access has not been granted yet; " \
+                     "personal accounts must finish a closed test with 12 testers for 14 " \
+                     "days first. (2) The app is still a draft; set the repository variable " \
+                     "PLAY_RELEASE_STATUS to draft and run prod again. (3) The release on " \
+                     "the internal track is itself a draft that was never rolled out in " \
+                     "Play Console. (4) Play Console shows unfinished app content tasks.")
+      end
+      raise
+    end
+    UI.success("Promoted to production (status: #{status}).")
   end
 end

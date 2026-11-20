@@ -5,28 +5,38 @@ import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 import 'package:medicine_lab_reader/core/theme/app_palette.dart';
 
 abstract final class AppTheme {
+  // Built once per brightness: the theme is rebuilt on every frame of the
+  // light/dark fade, and these parts do not depend on the blended colours.
+  static final _seeded = <Brightness, ColorScheme>{};
+  static final _texts = <Brightness, TextTheme>{};
+
   static ThemeData of(AppPalette p) {
     final brightness = p.isDark ? Brightness.dark : Brightness.light;
-    final scheme =
-        ColorScheme.fromSeed(
-          seedColor: AppPalette.light.primary,
-          brightness: brightness,
-        ).copyWith(
-          primary: p.primary,
-          onPrimary: p.isDark ? p.background : AppPalette.onAccent,
-          surface: p.card,
-          onSurface: p.textPrimary,
-          error: p.danger,
-          outline: p.border,
-          outlineVariant: p.border,
-          primaryContainer: p.primaryContainer,
-          onPrimaryContainer: p.onPrimaryContainer,
-        );
+    final seeded = _seeded[brightness] ??= ColorScheme.fromSeed(
+      seedColor: AppPalette.light.primary,
+      brightness: brightness,
+    );
+    final textTheme = _texts[brightness] ??= GoogleFonts.manropeTextTheme(
+      ThemeData(brightness: brightness).textTheme,
+    );
+    final scheme = seeded.copyWith(
+      primary: p.primary,
+      onPrimary: p.isDark ? p.background : AppPalette.onAccent,
+      surface: p.card,
+      onSurface: p.textPrimary,
+      error: p.danger,
+      outline: p.border,
+      outlineVariant: p.border,
+      primaryContainer: p.primaryContainer,
+      onPrimaryContainer: p.onPrimaryContainer,
+    );
     final radius = BorderRadius.circular(AppRadius.lg);
-    final base = ThemeData(brightness: brightness);
     return ThemeData(
       useMaterial3: true,
-      textTheme: GoogleFonts.manropeTextTheme(base.textTheme),
+      textTheme: textTheme.apply(
+        bodyColor: p.textPrimary,
+        displayColor: p.textPrimary,
+      ),
       brightness: brightness,
       colorScheme: scheme,
       scaffoldBackgroundColor: p.background,
@@ -54,6 +64,23 @@ abstract final class AppTheme {
         enabledBorder: OutlineInputBorder(
           borderRadius: radius,
           borderSide: BorderSide(color: p.border),
+        ),
+      ),
+      // Switches stay visible on both themes: a clear off-track outline and a
+      // filled primary track when on.
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? (p.isDark ? p.background : AppPalette.onAccent)
+              : p.textMuted,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? p.primary : p.inset,
+        ),
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? Colors.transparent
+              : p.textMuted,
         ),
       ),
       dialogTheme: DialogThemeData(backgroundColor: p.card),

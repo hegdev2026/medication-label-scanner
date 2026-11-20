@@ -1,4 +1,4 @@
-# Push or merge to `prod`: checks, then promote the latest internal-testing release
+# Push or merge to `prod`: checks, then promote the latest closed-testing release
 # to Google Play production. No rebuild: users get exactly what testers ran.
 name: Prod to Play production
 
@@ -20,7 +20,7 @@ jobs:
     uses: ./.github/workflows/checks.yml
 
   promote:
-    name: Promote internal release to Play production
+    name: Promote closed-testing release to Play production
     needs: checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -58,4 +58,4 @@ jobs:
         run: |
           TAG="prod-${GITHUB_RUN_NUMBER}"
           gh release create "$TAG" --target "$GITHUB_SHA" --title "Production $TAG" \
-            --notes "Promoted from Play internal testing to production."
+            --notes "Promoted from Play closed testing to production."

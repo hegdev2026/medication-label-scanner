@@ -71,20 +71,48 @@ platform :android do
     )
   end
 
+  # Same binary, second track: whatever internal testing just received is copied to
+  # closed testing (Play's "alpha" track), so both groups of testers get one build.
+  # Closed testing is also the track Play requires before production access.
+  desc "Copy the latest internal release to closed testing (alpha)"
+  lane :closed do
+    internal = google_play_track_version_codes(track: "internal")
+    if internal.nil? || internal.empty?
+      UI.user_error!("The internal track has no release to copy. Upload to internal first.")
+    end
+    UI.message("Internal track versionCodes: #{internal.join(', ')}")
+
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "alpha",
+      track_promote_release_status: release_status,
+      skip_upload_aab: true,
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      skip_upload_changelogs: true,
+      validate_only: ENV["SUPPLY_VALIDATE_ONLY"] == "true",
+    )
+    UI.success("Copied to closed testing (alpha).")
+  end
+
   # Promotes what testers already ran: the latest internal release goes to
   # production without a rebuild, so production gets exactly the binary that was
   # tested. Set ROLLOUT (for example 0.1) for a staged rollout to 10% of users.
-  desc "Promote the latest internal release to production"
+  desc "Promote the latest closed-testing (alpha) release to production"
   lane :promote do
     rollout = ENV["ROLLOUT"].to_s.strip
+    # Closed testing by default; PROMOTE_FROM=internal skips it.
+    source = ENV.fetch("PROMOTE_FROM", "alpha")
 
-    # Fail early, and say why, if there is nothing on the internal track.
-    internal = google_play_track_version_codes(track: "internal")
-    if internal.nil? || internal.empty?
-      UI.user_error!("The internal track has no release to promote. Push to the qa " \
-                     "branch first so a build is uploaded to internal testing.")
+    # Fail early, and say why, if there is nothing on the source track.
+    versions = google_play_track_version_codes(track: source)
+    if versions.nil? || versions.empty?
+      UI.user_error!("The #{source} track has no release to promote. Push to the qa " \
+                     "branch first so a build reaches internal and closed testing.")
     end
-    UI.message("Internal track versionCodes: #{internal.join(', ')}")
+    UI.message("#{source} track versionCodes: #{versions.join(', ')}")
     UI.message("Production track versionCodes: " \
                "#{(google_play_track_version_codes(track: 'production') || []).join(', ')}")
 
@@ -97,7 +125,7 @@ platform :android do
 
     begin
       upload_to_play_store(
-        track: "internal",
+        track: source,
         track_promote_to: "production",
         track_promote_release_status: status,
         skip_upload_aab: true,

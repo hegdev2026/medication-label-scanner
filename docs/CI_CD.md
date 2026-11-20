@@ -34,8 +34,8 @@ steps**, with no skipped jobs from the other branches.
 | You push or merge to | The run shows | Where it ends up |
 |---|---|---|
 | `staging` | **Checks**, then **Build staging APK** | the run's **Artifacts** on GitHub, kept 30 days |
-| `qa` | **Checks**, then **Build AAB and upload to Play internal testing** | Google Play **internal testing** |
-| `prod` | **Checks**, then **Promote internal release to Play production** | Google Play **production** |
+| `qa` | **Checks**, then **Build AAB and upload to Play internal testing** | Google Play **internal testing** and **closed testing** (same build) |
+| `prod` | **Checks**, then **Promote closed-testing release to Play production** | Google Play **production** |
 | a pull request into any of these | **Checks** only | nothing |
 | any other branch (your feature branches) | nothing runs | nothing |
 
@@ -58,10 +58,10 @@ Things that are easy to get wrong:
 | `.github/workflows/checks.yml` | The quality gates (format, analyze, test). Runs on pull requests, and the three workflows below call it first. |
 | `.github/workflows/staging.yml` | On a push to `staging`: checks, then the signed APK. Nothing to do with Google Play. |
 | `.github/workflows/qa.yml` | On a push to `qa`: checks, then the AAB, uploaded to Play internal testing. |
-| `.github/workflows/prod.yml` | On a push to `prod`: checks, then promotes the internal release to production. |
+| `.github/workflows/prod.yml` | On a push to `prod`: checks, then promotes the closed-testing release to production. |
 | `.github/actions/setup/action.yml` | Shared step: Java 17, the pinned Flutter, `flutter pub get`. The Flutter version is set here, once. |
 | `.github/actions/prepare-build/action.yml` | Shared step: writes `env.json` from a secret, decodes the keystore and writes `android/key.properties`. It checks every part, so a typo fails early with a clear message. |
-| `android/fastlane/Fastfile` | The Play lanes: `validate`, `internal` (upload) and `promote` (internal to production). |
+| `android/fastlane/Fastfile` | The Play lanes: `validate`, `internal` (upload), `closed` (internal to closed testing) and `promote` (closed testing to production). |
 | `android/fastlane/Appfile` | The package name (`com.hegdev.medscan`) and the key path. |
 | `android/Gemfile`, `android/Gemfile.lock` | fastlane and its pinned versions. |
 | `Makefile` | `make apk` and `make aab` build locally, obfuscated by default. |
@@ -355,7 +355,7 @@ to 10% first, set `PLAY_ROLLOUT` to `0.1` before the `prod` push.
 | Release notes error about a language | The release notes are written to `en-GB`. Match it to your store listing's default language by changing `PLAY_LANGUAGE` in the Fastfile. |
 | The `prod` run says there is nothing to promote | No release exists on the internal track. Do a `qa` push first. |
 | `Google Api Error: Invalid request - Precondition check failed` on `prod` | Play refuses the promotion. Usual causes: production access not granted yet (section 4.2); the app is still a draft, so set the variable `PLAY_RELEASE_STATUS` to `draft`; the internal release is a draft nobody rolled out in Play Console; or Play Console shows unfinished app content tasks. The run's log prints the internal and production versionCodes and these hints. |
-| `The internal track has no release to promote` | Nothing has been uploaded to internal testing yet. Push to `qa` first. |
+| `The alpha track has no release to promote` | Nothing reached closed testing yet. Push to `qa` first (it uploads to internal, then copies to closed). Set `PROMOTE_FROM=internal` to skip closed testing. |
 | The app is signed with the debug key | `android/key.properties` is missing in the build. Check the secrets and the **Set up release signing** step. |
 | The `prod` run waits forever | It is waiting for your approval. Open the run in **Actions** and click **Review deployments**. |
 

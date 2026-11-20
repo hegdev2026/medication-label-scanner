@@ -82,18 +82,35 @@ platform :android do
     end
     UI.message("Internal track versionCodes: #{internal.join(', ')}")
 
-    upload_to_play_store(
-      track: "internal",
-      track_promote_to: "alpha",
-      track_promote_release_status: release_status,
-      skip_upload_aab: true,
-      skip_upload_apk: true,
-      skip_upload_metadata: true,
-      skip_upload_images: true,
-      skip_upload_screenshots: true,
-      skip_upload_changelogs: true,
-      validate_only: ENV["SUPPLY_VALIDATE_ONLY"] == "true",
-    )
+    copy = lambda do |status|
+      upload_to_play_store(
+        track: "internal",
+        track_promote_to: "alpha",
+        track_promote_release_status: status,
+        skip_upload_aab: true,
+        skip_upload_apk: true,
+        skip_upload_metadata: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true,
+        skip_upload_changelogs: true,
+        validate_only: ENV["SUPPLY_VALIDATE_ONLY"] == "true",
+      )
+    end
+
+    begin
+      copy.call(release_status)
+    rescue FastlaneCore::Interface::FastlaneError => e
+      # Play only accepts draft releases on closed testing while the app itself is
+      # still a draft (not yet published). Fall back so the pipeline keeps working;
+      # the draft then needs one "Start rollout" click in Play Console.
+      raise unless e.message.include?("status draft may be created on draft app") &&
+                   release_status != "draft"
+
+      UI.important("The app is still a draft in Play, so closed testing only accepts " \
+                   "a draft release. Retrying as draft; roll it out in Play Console " \
+                   "(Closed testing > Releases).")
+      copy.call("draft")
+    end
     UI.success("Copied to closed testing (alpha).")
   end
 

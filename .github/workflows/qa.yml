@@ -1,6 +1,6 @@
 # Push or merge to `qa`: checks, then a signed, obfuscated AAB uploaded to Google
-# Play internal testing.
-name: QA to Play internal testing
+# Play internal testing, then copied to closed testing.
+name: QA to Play internal and closed testing
 
 on:
   push:
@@ -77,6 +77,12 @@ jobs:
           # "draft" until the very first release exists; see docs/CI_CD.md.
           RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
         run: bundle exec fastlane android internal
+      - name: Copy to closed testing
+        working-directory: android
+        env:
+          SUPPLY_JSON_KEY: ${{ github.workspace }}/android/fastlane/play-service-account.json
+          RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
+        run: bundle exec fastlane android closed
       - name: Upload debug symbols
         uses: actions/upload-artifact@v5
         with:

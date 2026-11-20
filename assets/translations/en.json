@@ -302,6 +302,24 @@
     "label": "Advertisement",
     "title": "Ads",
     "privacyChoices": "Ad privacy choices",
-    "about": "MedScan is free and shows ads from Google. You can review or change your ad privacy choices at any time."
+    "about": "MedScan is free and shows ads from Google. You can review or change your ad privacy choices at any time.",
+    "notRequired": "No ad privacy choice is needed where you are. If that changes, the option will appear here."
+  },
+  "update": {
+    "title": "Update available",
+    "message": "A new version of MedScan is ready. Update now to get the latest fixes.",
+    "now": "Update",
+    "later": "Later",
+    "readyTitle": "Update downloaded",
+    "readyMessage": "Restart MedScan to finish updating.",
+    "restart": "Restart",
+    "downloading": "Downloading the update…",
+    "failed": "The update could not be started. Please try again later."
+  },
+  "shortcuts": {
+    "scan": "Scan medicine",
+    "add": "Add medicine",
+    "search": "Search medicines",
+    "expiry": "Expiry tracker"
   }
 }

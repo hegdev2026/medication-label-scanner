@@ -7,9 +7,10 @@ import 'package:medicine_lab_reader/core/constants/app_colors.dart';
 import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 import 'package:medicine_lab_reader/core/theme/app_typography.dart';
 
-/// Frames an ad: nothing at all while ads are off (not ready, unsupported
-/// platform or the SDK has not started), otherwise a small "Advertisement" label
-/// above [child] so an ad is never mistaken for medicine information.
+/// Gate for an ad: nothing at all while ads are off (not ready, unsupported
+/// platform or the SDK has not started). The ad view itself shows [AdFrame]
+/// only once an ad has really loaded, so there is never an empty
+/// "Advertisement" label.
 class AdSlot extends StatelessWidget {
   const AdSlot({super.key, required this.enabled, required this.builder});
 
@@ -22,23 +23,31 @@ class AdSlot extends StatelessWidget {
     if (!enabled) return const SizedBox.shrink();
     return BlocBuilder<AdsCubit, AdsState>(
       buildWhen: (a, b) => a.showAds != b.showAds,
-      builder: (context, s) {
-        if (!s.showAds) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                'ads.label'.tr(),
-                style: AppText.labelSm.regular.tinted(AppColors.textMuted),
-              ),
-              const SizedBox(height: AppSpace.xs),
-              builder(context),
-            ],
-          ),
-        );
-      },
+      builder: (context, s) =>
+          s.showAds ? builder(context) : const SizedBox.shrink(),
     );
   }
+}
+
+/// A small "Advertisement" label above a loaded ad, so an ad is never mistaken
+/// for medicine information.
+class AdFrame extends StatelessWidget {
+  const AdFrame({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          'ads.label'.tr(),
+          style: AppText.labelSm.regular.tinted(AppColors.textMuted),
+        ),
+        const SizedBox(height: AppSpace.xs),
+        child,
+      ],
+    ),
+  );
 }

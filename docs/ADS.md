@@ -41,6 +41,19 @@ four unit ids (with `/`) are read by the app. `make run/apk/aab` hand all of
 them over. In CI, also export `ADMOB_APP_ID` as an environment variable. The
 iOS app id is in `ios/Runner/Info.plist` (currently Google's test id).
 
+### Test ads on Play's internal testing track
+
+Play promotes the same build from internal testing to production, so the build
+cannot switch to test ads by itself. Instead, register the testers' phones:
+add `"ADMOB_TEST_DEVICE_IDS": "ID1,ID2"` to `env.json` (the `ENV_JSON` secret in
+CI). Those devices get Google test ads from the real units; everyone else gets
+real ads. Each id is in logcat the first time the app runs on that phone:
+`Use RequestConfiguration.Builder().setTestDeviceIds(Arrays.asList("..."))`.
+
+A brand-new app or ad unit often returns no ads (error code 3, "no fill") for a
+few hours, and until the app is live on Play. That is normal; the app shows no
+"Advertisement" label or empty space when an ad has not loaded.
+
 ## Before publishing
 
 - Never tap your own live ads; use test devices while developing.

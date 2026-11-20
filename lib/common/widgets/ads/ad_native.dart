@@ -74,13 +74,15 @@ class _NativeViewState extends State<_NativeView> {
     valueListenable: _ad,
     builder: (_, ad, _) {
       if (ad == null) return const SizedBox.shrink();
-      return ConstrainedBox(
-        constraints: const BoxConstraints(
-          minWidth: 320,
-          minHeight: 90,
-          maxHeight: 200,
+      return AdFrame(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 320,
+            minHeight: 90,
+            maxHeight: 200,
+          ),
+          child: AdWidget(ad: ad),
         ),
-        child: AdWidget(ad: ad),
       );
     },
   );

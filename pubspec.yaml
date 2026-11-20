@@ -61,6 +61,8 @@ dependencies:
   url_launcher: ^6.3.3
   google_mobile_ads: ^9.2.0
   package_info_plus: ^10.2.2
+  in_app_update: ^4.2.5
+  quick_actions: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -139,10 +141,15 @@ flutter_launcher_icons:
 flutter_native_splash:
   color: "#ECF7F1"
   image: assets/images/splash_logo.png
-  # The same light splash in dark mode, so the logo stays readable.
-  color_dark: "#ECF7F1"
-  image_dark: assets/images/splash_logo.png
+  # Dark mode: the app's dark background and the logo on its own light tile, so
+  # the dark-green wordmark stays readable and the colour matches the first
+  # screen (AppPalette.dark.background).
+  color_dark: "#0B1220"
+  image_dark: assets/images/splash_logo_dark.png
   android_12:
     color: "#ECF7F1"
     image: assets/images/app_icon_foreground.png
     icon_background_color: "#ECF7F1"
+    color_dark: "#0B1220"
+    image_dark: assets/images/app_icon_foreground.png
+    icon_background_color_dark: "#0B1220"

@@ -67,7 +67,8 @@ class MedicineParser {
     r'(?:BATCH|B\.?\s*NO|LOT)\.?\s*(?:NO\.?|NUMBER|#)?\s*[:\-.]?\s*([A-Z0-9][A-Z0-9\-/]{2,})',
   );
   static final _expLabel = RegExp(
-    r'(?:EXP(?:IRY)?|EXPIRES|USE\s+BEFORE)\.?\s*(?:DATE)?\s*[:\-.]?\s*',
+    // Also the usual misreads of "EXP" (EXR, EXD, FXP) and "best before".
+    r'(?:EXP(?:IRY)?|EX[RD]|FXP|EXPIRES|USE\s+BEFORE|BEST\s+BEFORE)\.?\s*(?:DATE|DT)?\s*[:\-.]?\s*',
   );
   static final _mfgLabel = RegExp(
     r'(?:MFG|MFD|MANUF(?:ACTURING)?)\.?\s*(?:DATE)?\s*[:\-.]?\s*',

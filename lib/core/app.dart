@@ -2,12 +2,15 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:medicine_lab_reader/common/widgets/shortcuts_sync.dart';
 import 'package:medicine_lab_reader/core/ads/ads_cubit.dart';
 import 'package:medicine_lab_reader/core/di/sl.dart';
 import 'package:medicine_lab_reader/core/router/app_router.dart';
 import 'package:medicine_lab_reader/core/theme/app_theme.dart';
 import 'package:medicine_lab_reader/core/theme/theme_cubit.dart';
 import 'package:medicine_lab_reader/core/theme/theme_scope.dart';
+import 'package:medicine_lab_reader/features/app_update/presentation/bloc/app_update_cubit.dart';
+import 'package:medicine_lab_reader/features/app_update/presentation/widgets/app_update_host.dart';
 
 class MedScanApp extends StatelessWidget {
   const MedScanApp({super.key});
@@ -17,17 +20,21 @@ class MedScanApp extends StatelessWidget {
     providers: [
       BlocProvider.value(value: sl<ThemeCubit>()),
       BlocProvider.value(value: sl<AdsCubit>()),
+      BlocProvider.value(value: sl<AppUpdateCubit>()),
     ],
     child: BlocBuilder<ThemeCubit, ThemeState>(
       builder: (context, theme) => ThemeScope(
         palette: theme.palette,
         locale: context.locale,
-        child: MaterialApp.router(
+        builder: (context, palette) => MaterialApp.router(
           title: 'app.title'.tr(),
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.of(theme.palette),
+          theme: AppTheme.of(palette),
           themeMode: theme.isDark ? ThemeMode.dark : ThemeMode.light,
-          darkTheme: AppTheme.of(theme.palette),
+          darkTheme: AppTheme.of(palette),
+          // ThemeScope already fades the colours; a second fade here would
+          // fight it.
+          themeAnimationDuration: Duration.zero,
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
           locale: context.locale,
@@ -37,7 +44,9 @@ class MedScanApp extends StatelessWidget {
           builder: (context, child) => GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: child,
+            child: ShortcutsSync(
+              child: AppUpdateHost(child: child ?? const SizedBox.shrink()),
+            ),
           ),
         ),
       ),

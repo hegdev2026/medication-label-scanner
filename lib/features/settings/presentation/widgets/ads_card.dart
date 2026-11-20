@@ -9,8 +9,8 @@ import 'package:medicine_lab_reader/core/constants/app_colors.dart';
 import 'package:medicine_lab_reader/core/theme/app_metrics.dart';
 import 'package:medicine_lab_reader/core/theme/app_typography.dart';
 
-/// Settings: lets users in regions where the law requires it change their ad
-/// privacy choices. Hidden for everyone else.
+/// Settings: the ad privacy choices button where the law requires it (EEA, UK,
+/// Switzerland); elsewhere a short note says no choice is needed.
 class AdsCard extends StatelessWidget {
   const AdsCard({super.key});
 
@@ -18,7 +18,6 @@ class AdsCard extends StatelessWidget {
   Widget build(BuildContext context) => BlocBuilder<AdsCubit, AdsState>(
     buildWhen: (a, b) => a.privacyOptionsRequired != b.privacyOptionsRequired,
     builder: (context, s) {
-      if (!s.privacyOptionsRequired) return const SizedBox.shrink();
       return Padding(
         padding: const EdgeInsets.only(bottom: AppSpace.md),
         child: SectionCard(
@@ -31,11 +30,17 @@ class AdsCard extends StatelessWidget {
                 style: AppText.bodySm.tinted(AppColors.textSecondary),
               ),
               const SizedBox(height: AppSpace.md),
-              AppButton(
-                label: 'ads.privacyChoices'.tr(),
-                kind: AppButtonKind.tonal,
-                onPressed: context.read<AdsCubit>().showPrivacyOptions,
-              ),
+              if (s.privacyOptionsRequired)
+                AppButton(
+                  label: 'ads.privacyChoices'.tr(),
+                  kind: AppButtonKind.tonal,
+                  onPressed: context.read<AdsCubit>().showPrivacyOptions,
+                )
+              else
+                Text(
+                  'ads.notRequired'.tr(),
+                  style: AppText.bodySm.tinted(AppColors.textMuted),
+                ),
             ],
           ),
         ),
